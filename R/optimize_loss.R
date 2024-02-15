@@ -1,5 +1,5 @@
 #' @export
-optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda,eta=1,tol=1e-4,maxit=1000){
+optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,tol=1e-4,maxit=1000){
   #initialize
   H <- H0
   W <- W0
