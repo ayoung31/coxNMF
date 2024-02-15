@@ -13,7 +13,7 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,k,y,delta,alpha,lambda,eta=1,tol=1e
     eps_prev <- eps
     
     # Update W
-    W <- update_W(X,H,W),
+    W <- update_W(X,H,W)
     
     # Update H
     H <- update_H(X,W,beta,H,y,delta,alpha)
