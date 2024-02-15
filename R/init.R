@@ -10,7 +10,7 @@ init <- function(X,y,delta,k,alpha,ninit=10,maxit=15){
     fit <- optimize_loss(X,H0,W0,beta0,y,delta,alpha=10e-2,maxit=maxit)
     loss <- fit$loss
     if(loss < loss_best){
-      loss_best=lost
+      loss_best=loss
       fit_best=fit
     }
   }
