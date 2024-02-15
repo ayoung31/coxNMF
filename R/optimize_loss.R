@@ -1,5 +1,6 @@
 #' @export
-optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,tol=1e-4,maxit=1000){
+optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
+                          tol=1e-4,maxit=1000,verbose=FALSE){
   #initialize
   H <- H0
   W <- W0
@@ -36,7 +37,9 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,tol=1e
     
     eps <- abs(loss - loss_prev)/loss_prev
     
-    print(sprintf("iter: %d eps: %.4f loss: %.1f",it,eps,loss))
+    if(verbose){
+      print(sprintf("iter: %d eps: %.4f loss: %.1f",it,eps,loss))
+    }
     
     it <- it + 1
     if(it==maxit){
