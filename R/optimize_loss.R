@@ -43,8 +43,6 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,tol=1e
       warning("Iteration limit reached without convergence")
     }
     
-    print(sprintf("iter: %d eps: %.4f loss: %.1f",it,eps,loss))
-    
   }
   
   # refit beta with standardized H
