@@ -1,6 +1,6 @@
 #' @export
 optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
-                          tol=1e-4,maxit=1000,verbose=FALSE){
+                          tol=1e-4,maxit=1000,verbose=FALSE,normalize=FALSE){
   #initialize
   H <- H0
   W <- W0
@@ -23,12 +23,14 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
     beta <- update_beta(H,y,delta,lambda,eta)
     
     # Normalization
-    S <- rowSums(H)
-    Sinv <- diag(1/S)
-    S <- diag(S)
-    W <- W%*%S
-    H <- Sinv%*%H
-    beta <- S%*%matrix(beta,ncol=1)
+    if(normalize){
+      S <- rowSums(H)
+      Sinv <- diag(1/S)
+      S <- diag(S)
+      W <- W%*%S
+      H <- Sinv%*%H
+      beta <- S%*%matrix(beta,ncol=1)
+    }
     
     
     # Calculate loss
