@@ -7,7 +7,7 @@ init <- function(X,y,delta,k,alpha,ninit=10,maxit=15){
     H0 <- matrix(runif(n*k,0,1),nrow=k)
     W0 <- matrix(runif(p*k,0,1),nrow=p)
     beta0 <- runif(k,-1,1)
-    fit <- optimize_loss(X,H0,W0,beta0,y,delta,alpha=10e-2,maxit=maxit)
+    fit <- optimize_loss(X,H0,W0,beta0,y,delta,alpha=alpha,maxit=maxit)
     loss <- fit$loss
     if(loss < loss_best){
       loss_best=loss
