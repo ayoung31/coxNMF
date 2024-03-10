@@ -34,7 +34,7 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
     
     
     # Calculate loss
-    l <- calc_loss(X,W,H,beta,alpha,y,delta,theta,lambda)
+    l <- calc_loss(X,W,H,beta,alpha,y,delta,lambda,eta)
     loss <- l$loss
     
     eps <- abs(loss - loss_prev)/loss_prev
