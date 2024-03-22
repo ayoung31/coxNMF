@@ -1,8 +1,9 @@
 #' @export
-calc_loss <- function(X,W,H,beta,alpha,y,delta,lambda=1,eta=0){
+calc_loss <- function(X,W,H,beta,alpha,y,delta,lambda,eta){
   N <- ncol(H)
+  P <- ncol(W)
   beta <- matrix(beta,ncol=1)
-  nmf_loss <- norm(X-W%*%H,'F')^2
+  nmf_loss <- (norm(X-W%*%H,'F')^2)/(N*P)
   surv_loss <- 0
   for(i in 1:N){
     surv_loss <- surv_loss + 
