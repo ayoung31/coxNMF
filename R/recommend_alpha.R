@@ -9,7 +9,7 @@ recommend_alpha <- function(X,y,delta,k,nalpha,maxit=15){
   W0 <- matrix(runif(p*k,0,1),nrow=p)
   beta0 <- rep(0,k)
   fit0 <- optimize_loss(X,H0,W0,beta0,y,delta,alpha=0,maxit=maxit)
-  if(fit0$nmf_loss < fit0$surv_loss){
+  if(fit0$nmf_loss > fit0$surv_loss){
     alpha5050 <- fit0$nmf_loss / fit0$surv_loss
   }else{
     alpha5050 <- fit0$surv_loss / fit0$nmf_loss
