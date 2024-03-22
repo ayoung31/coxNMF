@@ -1,3 +1,4 @@
+#' @export
 recommend_alpha <- function(X,y,delta,k,nalpha,maxit=15){
   if(nalpha < 1){
     warning('nalpha must be a positive integer')
