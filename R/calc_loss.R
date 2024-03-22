@@ -12,6 +12,6 @@ calc_loss <- function(X,W,H,beta,alpha,y,delta,lambda,eta){
   }
   surv_loss <- surv_loss/N
   penalty <- (lambda/2)*((1-eta)*sum(beta^2) + eta*sum(abs(beta)))
-  loss <- nmf_loss - alpha*(surv_loss + penalty)
+  loss <- nmf_loss - alpha*(surv_loss - penalty)
   return(list(loss=loss,nmf_loss=nmf_loss,surv_loss=surv_loss))
 }
