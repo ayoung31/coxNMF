@@ -3,6 +3,7 @@
 export(calc_loss)
 export(init)
 export(optimize_loss)
+export(recommend_alpha)
 export(update_H)
 export(update_W)
 export(update_beta)
