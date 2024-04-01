@@ -15,7 +15,7 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
     
     # Update W
     W <- update_W(X,H,W)
-    W <- W%*%diag(1/colSums(W))
+    W <- diag(1/rowSums(W))%*%W
     
     # Update H
     H <- update_H(X,W,beta,H,y,delta,alpha)
