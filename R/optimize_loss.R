@@ -24,11 +24,11 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
     
     # Normalization
     if(normalize){
-      S <- rowSums(W)
+      S <- colSums(W)
       Sinv <- diag(1/S)
       S <- diag(S)
-      W <- Sinv%*%W
-      H <- H%*%S
+      W <- W%*%Sinv
+      H <- S%*%H
       beta <- Sinv%*%matrix(beta,ncol=1)
     }
     
