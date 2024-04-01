@@ -15,6 +15,7 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
     
     # Update W
     W <- update_W(X,H,W)
+    W <- W%*%diag(1/colSums(W))
     
     # Update H
     H <- update_H(X,W,beta,H,y,delta,alpha)
@@ -23,14 +24,14 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
     beta <- update_beta(H,y,delta,lambda,eta)
     
     # Normalization
-    if(normalize){
-      S <- colSums(W)
-      Sinv <- diag(1/S)
-      S <- diag(S)
-      W <- W%*%Sinv
-      H <- S%*%H
-      beta <- Sinv%*%matrix(beta,ncol=1)
-    }
+    # if(normalize){
+    #   S <- colSums(W)
+    #   Sinv <- diag(1/S)
+    #   S <- diag(S)
+    #   W <- W%*%Sinv
+    #   H <- S%*%H
+    #   beta <- Sinv%*%matrix(beta,ncol=1)
+    # }
     
     
     # Calculate loss
