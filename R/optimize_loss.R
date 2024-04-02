@@ -23,7 +23,7 @@ optimize_loss <- function(X,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=1,
     # Update beta
     beta <- update_beta(H,y,delta,lambda,eta)
     
-    Normalization
+    #Normalization
     if(normalize){
       S <- colSums(W)
       Sinv <- diag(1/S)
