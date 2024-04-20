@@ -26,7 +26,7 @@ cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda=NULL,eta=NULL,seed){
     Trains[[i]] <- Train
     Tests[[i]] <- Test
     
-    fit = run_eval_coxNMF(dat = Train, k = k, alpha = alpha, lambda = lambda,eta = eta)
+    fit = run_coxNMF(dat = Train, k = k, alpha = alpha, lambda = lambda,eta = eta)
     print(i)
     fits[[i]] <- fit
     
