@@ -1,8 +1,8 @@
 #' @export
-init <- function(X,y,delta,k,alpha,ninit=10,maxit=15){
+init <- function(X,M,y,delta,k,alpha,ninit=5,maxit=10,warmup=1){
   
-  if(maxit <10){
-    warning('Maxit must be at least 10')
+  if(warmup >= maxit){
+    warning('Maxit must be larger than warmup')
   }
   p <- nrow(X)
   n <- ncol(X)
@@ -12,8 +12,10 @@ init <- function(X,y,delta,k,alpha,ninit=10,maxit=15){
     W0 <- matrix(runif(p*k,0,1),nrow=p)
     #beta0 <- runif(k,-1,1)
     beta0 <- rep(0,k)
-    fit0 <- optimize_loss(X,H0,W0,beta0,y,delta,alpha=0,maxit=10)
-    fit <- optimize_loss(X,fit0$H,fit0$W,fit0$beta,y,delta,alpha=alpha,maxit=max(maxit-10,0))
+    fit0 <- optimize_loss(X=X,M=M,H0=H0,W0=W0,beta0=beta0,y=y,delta=delta,
+                          alpha=0,lambda=0,eta=0,maxit=warmup)
+    fit <- optimize_loss(X=X,M=M,H0=fit0$H,W0=fit0$W,beta0=fit0$beta,y=y,delta=delta,
+                         alpha=alpha,maxit=max(maxit-warmup,0))
     loss <- fit$loss
     if(loss < loss_best){
       loss_best=loss

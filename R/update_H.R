@@ -1,5 +1,5 @@
 #' @export
-update_H <- function(X,W,beta,H,y,delta,alpha){
+update_H <- function(X,M,W,beta,H,y,delta,alpha){
   N <- ncol(H)
   Hnew <- H
   l <- H
@@ -8,10 +8,10 @@ update_H <- function(X,W,beta,H,y,delta,alpha){
     l[,r] <- delta[r]*beta
     for(s in 1:N){
       l[,r] <- l[,r] - as.numeric((delta[s]*(y[r]>=y[s])*
-                          exp(t(beta)%*%H[,r])/
-                          sum(((y>=y[s])*t(exp(t(beta)%*%H)))))) * beta
+                                     exp(t(beta)%*%H[,r])/
+                                     sum(((y>=y[s])*t(exp(t(beta)%*%H)))))) * beta
     }
   }
-  Hnew <- (H / (t(W)%*%W%*%H)) * ((t(W)%*%X) + (alpha/2)*pmax(l,0))
+  Hnew <- (H / (t(W)%*%(M*(W%*%H)))) * ((t(W)%*%(M*X)) + (alpha/2)*pmax(l,0))
   return(Hnew)
 }
