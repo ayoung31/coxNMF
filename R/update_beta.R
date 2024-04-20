@@ -10,6 +10,7 @@ update_beta <- function(H,y,delta,lambda,eta){
     fit=glmnet::glmnet(t(H),y_surv,family='cox',alpha = eta,lambda=lambda)
     beta = coef(fit,s=lambda)
     loglike=((1-fit$dev.ratio)*fit$nulldev)/-2
+    # if lambda and eta prespecified, we return the same lambda and eta
     lam_best=lambda
     eta_best=eta
   }else{

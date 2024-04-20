@@ -1,5 +1,5 @@
 #' @export
-init <- function(X,M,y,delta,k,alpha,ninit=5,maxit=10,warmup=1){
+init <- function(X,M,y,delta,k,alpha,lambda=NULL,eta=NULL,ninit=5,maxit=10,warmup=1){
   
   if(warmup >= maxit){
     warning('Maxit must be larger than warmup')
@@ -15,7 +15,7 @@ init <- function(X,M,y,delta,k,alpha,ninit=5,maxit=10,warmup=1){
     fit0 <- optimize_loss(X=X,M=M,H0=H0,W0=W0,beta0=beta0,y=y,delta=delta,
                           alpha=0,lambda=0,eta=0,maxit=warmup)
     fit <- optimize_loss(X=X,M=M,H0=fit0$H,W0=fit0$W,beta0=fit0$beta,y=y,delta=delta,
-                         alpha=alpha,maxit=max(maxit-warmup,0))
+                         alpha=alpha,lambda=lambda,eta=eta,maxit=max(maxit-warmup,0))
     loss <- fit$loss
     if(loss < loss_best){
       loss_best=loss
