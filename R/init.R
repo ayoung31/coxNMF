@@ -1,5 +1,5 @@
 #' @export
-init <- function(X,M,y,delta,k,alpha,lambda=NULL,eta=NULL,ninit=5,maxit=10,warmup=1){
+init <- function(X,M,y,delta,k,alpha,lambda=0,eta=0,ninit=5,maxit=10,warmup=1){
   
   if(warmup >= maxit){
     warning('Maxit must be larger than warmup')

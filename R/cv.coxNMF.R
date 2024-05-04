@@ -1,5 +1,5 @@
 #' @export
-cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda=NULL,eta=NULL,seed){
+cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda,eta,seed,...){
   
   folds <- get_folds(n=ncol(dat$Train$X),nfold=nfold,seed=seed)
   
@@ -26,7 +26,7 @@ cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda=NULL,eta=NULL,seed){
     Trains[[i]] <- Train
     Tests[[i]] <- Test
     
-    fit = run_coxNMF(dat = Train, k = k, alpha = alpha, lambda = lambda,eta = eta)
+    fit = run_coxNMF(dat = Train, k = k, alpha = alpha, lambda = lambda,eta = eta,...)
     print(i)
     fits[[i]] <- fit
     
@@ -41,8 +41,6 @@ cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda=NULL,eta=NULL,seed){
     Htest[[i]] = NMF::.fcnnls(fit$fit$W,Test$X)$coef
     ctest[i] = cvwrapr::getCindex(t(Htest[[i]])%*%fit$fit$beta,Test$s)
     ctrain[i] = fit$surv$concordance[6]
-    
-    # add testing deviance here
     
     metric[i] = ctest[i]/rtest[i]
   }

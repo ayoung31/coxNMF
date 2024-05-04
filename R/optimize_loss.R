@@ -1,5 +1,5 @@
 #' @export
-optimize_loss <- function(X,M,H0=NULL,W0,beta0,y,delta,alpha,lambda=NULL,eta=NULL,
+optimize_loss <- function(X,M,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=0,
                           tol=1e-4,maxit=1000,verbose=FALSE,normalize=TRUE){
   #initialize
   H <- H0
@@ -22,14 +22,10 @@ optimize_loss <- function(X,M,H0=NULL,W0,beta0,y,delta,alpha,lambda=NULL,eta=NUL
     H <- update_H(X=X,M=M,W=W,beta=beta,H=H,y=y,delta=delta,alpha=alpha)
     
     # Update beta
-    s <- update_beta(H=H,y=y,delta=delta,lambda=lambda,eta=eta) #return selected lambda and eta
-    beta = s$beta
-    loglike = s$loglike
-    l = s$lambda
-    e = s$eta
+    beta <- update_beta(H=H,y=y,delta=delta,lambda=lambda,eta=eta)
     
     # Calculate loss
-    l <- calc_loss(X=X,M=M,W=W,H=H,beta=beta,alpha=alpha,y=y,delta=delta,lambda=l,eta=e, loglike=loglike) #pass new lambda eta from update_beta function
+    l <- calc_loss(X=X,M=M,W=W,H=H,beta=beta,alpha=alpha,y=y,delta=delta,lambda=lambda,eta=eta)
     loss <- l$loss
     
     eps <- abs(loss - loss_prev)/loss_prev
@@ -48,6 +44,6 @@ optimize_loss <- function(X,M,H0=NULL,W0,beta0,y,delta,alpha,lambda=NULL,eta=NUL
   # refit beta with standardized H
   #nb <- update_beta(H,y,delta,theta,lambda,eta,stdize=FALSE)
   
-  return(list(H=H,W=W,beta=beta,H0=H0,W0=W0,beta0=beta0,X=X,loss=loss,eps=eps,surv_loss=l$surv_loss,nmf_loss=l$nmf_loss,lambda=l,eta=e))
+  return(list(H=H,W=W,beta=beta,H0=H0,W0=W0,beta0=beta0,X=X,loss=loss,eps=eps,surv_loss=l$surv_loss,nmf_loss=l$nmf_loss))
   # we may want to return selected lambda and eta here
 }
