@@ -13,9 +13,9 @@ init <- function(X,M,y,delta,k,alpha,WtX,lambda,eta,ninit=5,maxit=10,warmup=1){
     #beta0 <- runif(k,-1,1)
     beta0 <- rep(0,k)
     fit0 <- optimize_loss(X=X,M=M,H0=H0,W0=W0,beta0=beta0,y=y,delta=delta,
-                          alpha=0,lambda=0,eta=0,maxit=warmup)
+                          alpha=0,lambda=0,eta=0,maxit=warmup,WtX=WtX)
     fit <- optimize_loss(X=X,M=M,H0=fit0$H,W0=fit0$W,beta0=fit0$beta,y=y,delta=delta,
-                         alpha=alpha,lambda=lambda,eta=eta,maxit=max(maxit-warmup,0))
+                         alpha=alpha,lambda=lambda,eta=eta,maxit=max(maxit-warmup,0),WtX=WtX)
     loss <- fit$loss
     if(loss < loss_best){
       loss_best=loss
