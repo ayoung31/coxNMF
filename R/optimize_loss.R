@@ -1,7 +1,6 @@
 #' @export
-optimize_loss <- function(X,M,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=0,
-                          tol=1e-4,maxit=1000,verbose=FALSE,normalize=TRUE,
-                          WtX=FALSE,norm.type='row'){
+optimize_loss <- function(X,M,H0,W0,beta0,y,delta,alpha,lambda,eta,
+                          tol=1e-4,maxit=1000,verbose=FALSE,WtX,norm.type='row'){
   #initialize
   H <- H0
   W <- W0
@@ -40,9 +39,13 @@ optimize_loss <- function(X,M,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=0,
     
   }
   
-  # refit beta with standardized H
-  #nb <- update_beta(H,y,delta,theta,lambda,eta,stdize=FALSE)
+  # Define return objects
+  fit = list(W=W,H=H,beta=beta)
+  data = list(X=X,y=y,delta=delta,M=M)
+  init = list(W0=W0,H0=H0,beta0=beta0)
+  params = list(alpha=alpha,lambda=lamda,eta=eta)
+  options = list(tol=tol,maxit=maxit,verbose=verbose,
+                 WtX=WtX,norm.type=norm.type)
   
-  return(list(H=H,W=W,beta=beta,H0=H0,W0=W0,beta0=beta0,X=X,loss=loss,eps=eps,surv_loss=l$surv_loss,nmf_loss=l$nmf_loss))
-  # we may want to return selected lambda and eta here
+  return(list(fit=fit,data=data,init=init,params=params,options=options,loss=l,niter=it))
 }
