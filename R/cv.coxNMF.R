@@ -28,9 +28,9 @@ cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda,eta,seed,WtX,...){
     print(i)
     fits[[i]] <- coxNMF
     
-    rtrain[i] <- coxNMF$fit$nmf_loss
+    rtrain[i] <- coxNMF$loss$nmf_loss
     if(sum(1-Train$M)!=0){
-      rmask[i] <- norm((1-Train$M)*(coxNMF$fit$X-coxNMF$fit$W%*%coxNMF$fit$H),'F')^2 / sum(1-Train$M)
+      rmask[i] <- norm((1-Train$M)*(Train$X-coxNMF$fit$W%*%coxNMF$fit$H),'F')^2 / sum(1-Train$M)
     }else{
       rmask[i] <- NA
     }
@@ -45,7 +45,7 @@ cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda,eta,seed,WtX,...){
     }
     ctest[i] = cvwrapr::getCindex(t(Htest[[i]])%*%coxNMF$fit$beta,Test$s)
     
-    metric[i] = ctest[i]/rtest[i]
+    metric[i] = ctest[i]/rmask[i]
   }
   
   metrics = list(ctrain=ctrain,ctest=ctest,rtrain=rtrain,rmask=rmask,metric=metric)

@@ -9,7 +9,7 @@ optimize_loss <- function(X,M,H0,W0,beta0,y,delta,alpha,lambda,eta,
   eps <- 1
   it <- 0
   
-  while(eps > tol & it < maxit){
+  while(eps > tol & it <= maxit){
     loss_prev <- loss
     eps_prev <- eps
     
@@ -28,11 +28,12 @@ optimize_loss <- function(X,M,H0,W0,beta0,y,delta,alpha,lambda,eta,
     
     eps <- abs(loss - loss_prev)/loss_prev
     
+    
+    it <- it + 1
     if(verbose){
       print(sprintf("iter: %d eps: %.4f loss: %.1f",it,eps,loss))
     }
     
-    it <- it + 1
     if(it==maxit){
       warning("Iteration limit reached without convergence")
     }
@@ -43,7 +44,7 @@ optimize_loss <- function(X,M,H0,W0,beta0,y,delta,alpha,lambda,eta,
   fit = list(W=W,H=H,beta=beta)
   data = list(X=X,y=y,delta=delta,M=M)
   init = list(W0=W0,H0=H0,beta0=beta0)
-  params = list(alpha=alpha,lambda=lamda,eta=eta)
+  params = list(alpha=alpha,lambda=lambda,eta=eta)
   options = list(tol=tol,maxit=maxit,verbose=verbose,
                  WtX=WtX,norm.type=norm.type)
   
