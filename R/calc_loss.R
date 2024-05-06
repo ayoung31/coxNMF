@@ -1,11 +1,15 @@
 #' @export
-calc_loss <- function(X,M,W,H,beta,alpha,y,delta,lambda,eta){
+calc_loss <- function(X,M,W,H,beta,alpha,y,delta,lambda,eta,WtX){
   N <- ncol(H)
-  #P <- nrow(W)
   beta <- matrix(beta,ncol=1)
   nmf_loss <- (norm(M*(X-W%*%H),'F')^2)/sum(M)
   
-  a1 <- t(beta)%*%H
+  if(WtX){
+    a1 <- t(beta)%*%t(W)%*%(M*X)
+  }else{
+    a1 <- t(beta)%*%H
+  }
+  
   ind = matrix(NA,nrow=N,ncol=N)
   for(i in 1:N){
     ind[,i] = (y>=y[i])^2

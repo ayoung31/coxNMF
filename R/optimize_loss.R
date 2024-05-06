@@ -1,6 +1,7 @@
 #' @export
 optimize_loss <- function(X,M,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=0,
-                          tol=1e-4,maxit=1000,verbose=FALSE,normalize=TRUE){
+                          tol=1e-4,maxit=1000,verbose=FALSE,normalize=TRUE,
+                          WtX=FALSE,norm.type='row'){
   #initialize
   H <- H0
   W <- W0
@@ -14,18 +15,16 @@ optimize_loss <- function(X,M,H0=NULL,W0,beta0,y,delta,alpha,lambda=0,eta=0,
     eps_prev <- eps
     
     # Update W
-    W <- update_W(X=X,M=M,H=H,W=W)
-    # add row normalization here
-    W <- diag(1/rowSums(W))%*%W
+    W <- update_W(X=X,M=M,H=H,W=W,beta=beta,y=y,delta=delta,alpha=alpha,WtX=WtX,norm.type=norm.type)
     
     # Update H
-    H <- update_H(X=X,M=M,W=W,beta=beta,H=H,y=y,delta=delta,alpha=alpha)
+    H <- update_H(X=X,M=M,W=W,beta=beta,H=H,y=y,delta=delta,alpha=alpha,WtX=WtX)
     
     # Update beta
-    beta <- update_beta(H=H,y=y,delta=delta,lambda=lambda,eta=eta)
+    beta <- update_beta(H=H,W=W,X=X,M=M,y=y,delta=delta,lambda=lambda,eta=eta,WtX=WtX)
     
     # Calculate loss
-    l <- calc_loss(X=X,M=M,W=W,H=H,beta=beta,alpha=alpha,y=y,delta=delta,lambda=lambda,eta=eta)
+    l <- calc_loss(X=X,M=M,W=W,H=H,beta=beta,alpha=alpha,y=y,delta=delta,lambda=lambda,eta=eta,WtX=WtX)
     loss <- l$loss
     
     eps <- abs(loss - loss_prev)/loss_prev
