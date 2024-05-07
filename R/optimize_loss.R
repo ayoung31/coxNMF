@@ -31,7 +31,7 @@ optimize_loss <- function(X,M,H0,W0,beta0,y,delta,alpha,lambda,eta,
     
     it <- it + 1
     if(verbose){
-      print(sprintf("iter: %d eps: %.4f loss: %.1f",it,eps,loss))
+      print(sprintf("iter: %d eps: %.8f loss: %.8f",it,eps,loss))
     }
     
     if(it==maxit){
