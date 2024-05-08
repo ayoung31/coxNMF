@@ -14,9 +14,9 @@ calc_loss <- function(X,M,W,H,beta,alpha,y,delta,lambda,eta,WtX){
   for(i in 1:N){
     ind[,i] = (y>=y[i])^2
   }
-  surv_loss = sum(delta*(a1 - log(exp(a1)%*%ind)))/N
+  surv_loss = 2*sum(delta*(a1 - log(exp(a1)%*%ind)))/N
 
-  penalty <- (lambda/2)*((1-eta)*sum(beta^2) + eta*sum(abs(beta)))
+  penalty <- lambda*((1-eta)*sum(beta^2)/2 + eta*sum(abs(beta)))
   loss <- nmf_loss - alpha*(surv_loss - penalty)
   return(list(loss=loss,nmf_loss=nmf_loss,surv_loss=surv_loss))
 }
