@@ -1,5 +1,5 @@
 #' @export
-recommend_alpha <- function(X,M,y,delta,k,nalpha,maxit=15){
+recommend_alpha <- function(X,M,y,delta,k,nalpha,maxit=15,WtX,eta=0,lambda=0){
   if(nalpha < 1){
     warning('nalpha must be a positive integer')
   }
@@ -9,11 +9,11 @@ recommend_alpha <- function(X,M,y,delta,k,nalpha,maxit=15){
   W0 <- matrix(runif(p*k,0,1),nrow=p)
   M <- matrix(1,nrow=p,ncol=n)
   beta0 <- rep(0,k)
-  fit0 <- optimize_loss(X=X,M=M,H0=H0,W0=W0,beta0=beta0,y=y,delta=delta,alpha=0,maxit=maxit)
-  if(fit0$nmf_loss > fit0$surv_loss){
-    alpha5050 <- -1 * fit0$nmf_loss / fit0$surv_loss
+  fit0 <- optimize_loss(X=X,M=M,H0=H0,W0=W0,beta0=beta0,y=y,delta=delta,alpha=0,maxit=maxit,WtX=WtX,eta=eta,lambda=lambda)
+  if(fit0$loss$nmf_loss > fit0$loss$surv_loss){
+    alpha5050 <- -1 * fit0$loss$nmf_loss / fit0$loss$surv_loss
   }else{
-    alpha5050 <- -1 * fit0$surv_loss / fit0$nmf_loss
+    alpha5050 <- -1 * fit0$loss$surv_loss / fit0$loss$nmf_loss
   }
   if(nalpha %% 2 > 0){
     nalpha=nalpha+1
