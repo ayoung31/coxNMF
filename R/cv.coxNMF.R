@@ -1,5 +1,5 @@
 #' @export
-cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda,eta,seed,WtX,...){
+cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda,eta,seed,WtX,norm.type,...){
   
   folds <- get_folds(n=ncol(dat$Train$X),nfold=nfold,seed=seed)
   
@@ -24,7 +24,7 @@ cv.coxNMF <- function(dat,nfold,perc_miss,k,alpha,lambda,eta,seed,WtX,...){
     
     Tests[[i]] <- Test
     
-    coxNMF = run_coxNMF(dat = Train, k = k, alpha = alpha, lambda = lambda,eta = eta,WtX=WtX,...)
+    coxNMF = run_coxNMF(dat = Train, k = k, alpha = alpha, lambda = lambda,eta = eta,WtX=WtX,norm.type=norm.type,...)
     print(i)
     fits[[i]] <- coxNMF
     
