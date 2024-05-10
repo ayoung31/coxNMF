@@ -16,7 +16,7 @@ update_H <- function(X,M,W,beta,H,y,delta,alpha,WtX){
     a4 = (1/a3) * a2 # multiply each column of a2 by 1/a3 vector
     
     l=kronecker(t(delta) - (t(delta) %*% a4),beta)
-    Hnew <- (H / (t(W)%*%(M*(W%*%H)))) * ((t(W)%*%(M*X)) + (alpha/2)*pmax(l,0))
+    Hnew <- ((t(W)%*%(M*X)) / (t(W)%*%(M*(W%*%H)))) * (H + (alpha/2)*pmax(l,0))
   }
 
   return(Hnew)
