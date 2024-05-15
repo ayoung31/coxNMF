@@ -1,5 +1,5 @@
 #' @export
-run_coxNMF = function(dat, k, alpha, lambda, eta, WtX,verbose=TRUE,norm.type='none',...){
+run_coxNMF = function(dat, k, alpha, lambda, eta, WtX,verbose=TRUE,norm.type='col',...){
   # now do survival
   fit0 = init(X = dat$X,M=dat$M,y = dat$s[,1],delta = dat$s[,2],k = k,alpha = alpha, 
               lambda=lambda, eta=eta, WtX=WtX, verbose=verbose, norm.type=norm.type,...) # new init adjustment here

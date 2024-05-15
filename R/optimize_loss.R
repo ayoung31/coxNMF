@@ -1,6 +1,6 @@
 #' @export
 optimize_loss <- function(X,M,H0,W0,beta0,y,delta,alpha,lambda,eta,
-                          tol=1e-6,maxit=10000,verbose=FALSE,WtX,norm.type='col'){
+                          tol=1e-6,maxit=10000,verbose=FALSE,WtX,norm.type){
   #initialize
   H <- H0
   W <- W0
