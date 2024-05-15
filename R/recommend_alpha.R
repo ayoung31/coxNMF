@@ -1,5 +1,5 @@
 #' @export
-recommend_alpha <- function(X,M,y,delta,k,nalpha,maxit=15,WtX,eta=0,lambda=0){
+recommend_alpha <- function(X,M,y,delta,k,nalpha,maxit=15,WtX,eta=0,lambda=0, norm.type){
   if(nalpha < 1){
     warning('nalpha must be a positive integer')
   }
