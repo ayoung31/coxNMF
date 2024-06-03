@@ -3,8 +3,8 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-void update_H(const arma::mat& X, const arma::mat& M, const arma::mat& W,
-                   const arma::colvec& beta, arma::mat& H, 
+arma::mat update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
+                   const arma::colvec& beta, arma::mat H, 
                    const arma::colvec& y, const arma::colvec& delta, 
                    double alpha, bool WtX) {
   arma::mat Wt = W.t();
@@ -18,10 +18,10 @@ void update_H(const arma::mat& X, const arma::mat& M, const arma::mat& W,
     
     // Indicator matrix
     arma::mat y_matrix = arma::repmat(y, 1, N);
-    arma::mat I = arma::conv_to<arma::mat>::from(y_matrix == y_matrix.t());
+    arma::mat I = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
     
     // intermediate matrix
-    arma::mat temp = I.t() % arma::repmat(I.t() * lp, 1, N) % arma::repmat(lp.t(),N,1);
+    arma::mat temp = I.t() % arma::repmat(lp.t(),N,1) / arma::repmat(I.t() * lp, 1, N);
     
     // derivative of log likelihood
     arma::rowvec delta_t = delta.t();
@@ -33,7 +33,7 @@ void update_H(const arma::mat& X, const arma::mat& M, const arma::mat& W,
       arma::clamp(l, 0, arma::datum::inf));
   }
   
-  return;
+  return H;
 }
 
 
