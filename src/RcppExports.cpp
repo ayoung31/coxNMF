@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // update_H_cpp
-arma::mat update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::colvec& beta, arma::mat H, const arma::colvec& y, const arma::colvec& delta, double alpha, bool WtX);
+arma::mat update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::colvec& beta, const arma::mat& H, const arma::colvec& y, const arma::colvec& delta, double alpha, bool WtX);
 RcppExport SEXP _coxNMF_update_H_cpp(SEXP XSEXP, SEXP MSEXP, SEXP WSEXP, SEXP betaSEXP, SEXP HSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP alphaSEXP, SEXP WtXSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -21,7 +21,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type M(MSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type W(WSEXP);
     Rcpp::traits::input_parameter< const arma::colvec& >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type H(HSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type H(HSEXP);
     Rcpp::traits::input_parameter< const arma::colvec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::colvec& >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
@@ -30,9 +30,52 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// update_W_cpp
+arma::mat update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H, const arma::mat& W, const arma::colvec& beta, const arma::colvec& y, const arma::colvec& delta, double alpha, bool WtX, int norm_type);
+RcppExport SEXP _coxNMF_update_W_cpp(SEXP XSEXP, SEXP MSEXP, SEXP HSEXP, SEXP WSEXP, SEXP betaSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP alphaSEXP, SEXP WtXSEXP, SEXP norm_typeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type M(MSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type H(HSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type W(WSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::colvec& >::type delta(deltaSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< bool >::type WtX(WtXSEXP);
+    Rcpp::traits::input_parameter< int >::type norm_type(norm_typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(update_W_cpp(X, M, H, W, beta, y, delta, alpha, WtX, norm_type));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calc_loss_cpp
+List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::mat& H, const arma::vec& beta, double alpha, const arma::vec& y, const arma::vec& delta, double lambda, double eta, bool WtX);
+RcppExport SEXP _coxNMF_calc_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP alphaSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP WtXSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type M(MSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type W(WSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type H(HSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type delta(deltaSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< bool >::type WtX(WtXSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_coxNMF_update_H_cpp", (DL_FUNC) &_coxNMF_update_H_cpp, 9},
+    {"_coxNMF_update_W_cpp", (DL_FUNC) &_coxNMF_update_W_cpp, 10},
+    {"_coxNMF_calc_loss_cpp", (DL_FUNC) &_coxNMF_calc_loss_cpp, 11},
     {NULL, NULL, 0}
 };
 

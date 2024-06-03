@@ -5,3 +5,11 @@ update_H_cpp <- function(X, M, W, beta, H, y, delta, alpha, WtX) {
     .Call(`_coxNMF_update_H_cpp`, X, M, W, beta, H, y, delta, alpha, WtX)
 }
 
+update_W_cpp <- function(X, M, H, W, beta, y, delta, alpha, WtX, norm_type) {
+    .Call(`_coxNMF_update_W_cpp`, X, M, H, W, beta, y, delta, alpha, WtX, norm_type)
+}
+
+calc_loss_cpp <- function(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX) {
+    .Call(`_coxNMF_calc_loss_cpp`, X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX)
+}
+

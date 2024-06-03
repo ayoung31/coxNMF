@@ -22,9 +22,9 @@ update_W <- function(X,M,H,W,beta,y,delta,alpha,WtX,norm.type){
     Wnew <- W * ((M*X)%*%t(H)) / ((M*(W%*%H))%*%t(H))
   }
   
-  if(norm.type=='row'){
+  if(norm.type==1){
     Wnew <- diag(1/rowSums(Wnew))%*%Wnew
-  }else if(norm.type=='col'){
+  }else if(norm.type==2){
     Wnew <- Wnew%*%diag(1/colSums(Wnew))
   }
   

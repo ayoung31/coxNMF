@@ -5,7 +5,8 @@ optimize_loss <- function(X,M,H0,W0,beta0,y,delta,alpha,lambda,eta,
   H <- H0
   W <- W0
   beta <- beta0
-  loss <- 0
+  loss <- calc_loss(X=X,M=M,W=W,H=H,beta=beta,alpha=alpha,y=y,delta=delta,
+                    lambda=lambda,eta=eta,WtX=WtX)$loss
   eps <- 1
   it <- 0
   
