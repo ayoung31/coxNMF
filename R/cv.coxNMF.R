@@ -1,5 +1,5 @@
 #' @export
-cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, M = NA, WtX = FALSE,
+cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
                       verbose = FALSE, norm_type = 2, tol = 1e-6, maxit = 10000,
                       penalty = 'lasso', nfold = 5, perc_miss = .3, seed = 123){
   
