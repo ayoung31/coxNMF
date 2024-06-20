@@ -4,14 +4,13 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-arma::mat update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
-                       const arma::colvec& beta, const arma::mat& H, 
+void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
+                       const arma::colvec& beta, arma::mat& H, 
                        const arma::colvec& y, const arma::colvec& delta, 
                        double alpha, bool WtX) {
-  arma::mat Hnew;
   arma::mat Wt = W.t();
   if(WtX){
-    Hnew = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
+    H = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
   }else{
     int N = H.n_cols;
     
@@ -30,37 +29,36 @@ arma::mat update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& 
     arma::mat l = arma::kron(delta.t() - (delta.t() * temp),beta);
     
     // H update
-    Hnew = (H / (Wt * (M % (W * H)))) % 
+    H = (H / (Wt * (M % (W * H)))) % 
       ((Wt * (M % X)) + (alpha * arma::accu(M) / N) * 
       arma::clamp(l, 0, arma::datum::inf));
   }
   
-  return Hnew;
+  return;
 }
 
 
 // [[Rcpp::export]]
-arma::mat update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
-                       const arma::mat& W, const arma::colvec& beta, 
+void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
+                       arma::mat& W, const arma::colvec& beta, 
                        const arma::colvec& y, const arma::colvec& delta, 
                        double alpha, bool WtX, int norm_type) {
-  arma::mat Wnew;
   if(!WtX){
-    Wnew = W % ((M % X) * H.t()) / ((M % (W * H)) * H.t());
+    W = W % ((M % X) * H.t()) / ((M % (W * H)) * H.t());
   }else{
     //Need to update
   }
   
   
   if(norm_type == 1){
-    arma::colvec row_sums = sum(Wnew, 1);
-    Wnew.each_col() /= row_sums;
+    arma::colvec row_sums = sum(W, 1);
+    W.each_col() /= row_sums;
   }else if(norm_type == 2){
-    arma::rowvec col_sums = sum(Wnew, 0);
-    Wnew.each_row() /= col_sums;
+    arma::rowvec col_sums = sum(W, 0);
+    W.each_row() /= col_sums;
   }
   
-  return Wnew;
+  return;
 }
 
 // [[Rcpp::export]]
@@ -468,8 +466,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
 
   while(eps > tol && it <= maxit){
     loss_prev = loss;
-    W = update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
-    H = update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
+    update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
+    update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
     beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
 
     l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
@@ -487,6 +485,11 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
 
   }
 
-  List L = List::create(W,H,beta);
+  List L = List::create(
+    Named("W") = W,
+    Named("H") = H,
+    Named("beta") = beta,
+    Named("loss") = l,
+    Named("iter") = it);
   return L;
 }
