@@ -14,9 +14,9 @@ test_that("update_H R and cpp give same result", {
   alpha=.5
 
   fit1=update_H(X,M,W,beta,H,y,delta,alpha,FALSE)
-  fit2=update_H_cpp(X,M,W,beta,H,y,delta,alpha,FALSE)
+  update_H_cpp(X,M,W,beta,H,y,delta,alpha,FALSE)
 
-  expect_equal(fit1,fit2)
+  expect_equal(fit1,H)
 })
 
 test_that("WtX update_H R and cpp give same result", {
@@ -34,9 +34,9 @@ test_that("WtX update_H R and cpp give same result", {
   alpha=.5
 
   fit1=update_H(X,M,W,beta,H,y,delta,alpha,TRUE)
-  fit2=update_H_cpp(X,M,W,beta,H,y,delta,alpha,TRUE)
+  update_H_cpp(X,M,W,beta,H,y,delta,alpha,TRUE)
 
-  expect_equal(fit1,fit2)
+  expect_equal(fit1,H)
 })
 
 test_that("update_W R and cpp give same result column normalization", {
@@ -55,9 +55,9 @@ test_that("update_W R and cpp give same result column normalization", {
   alpha=.5
 
   fit1=update_W(X,M,H,W,beta,y,delta,alpha,FALSE,2)
-  fit2=update_W_cpp(X,M,H,W,beta,y,delta,alpha,FALSE,2)
+  update_W_cpp(X,M,H,W,beta,y,delta,alpha,FALSE,2)
 
-  expect_equal(fit1,fit2)
+  expect_equal(fit1,W)
 })
 
 test_that("update_W R and cpp give same result row normalization", {
@@ -76,9 +76,9 @@ test_that("update_W R and cpp give same result row normalization", {
   alpha=.5
 
   fit1=update_W(X,M,H,W,beta,y,delta,alpha,FALSE,1)
-  fit2=update_W_cpp(X,M,H,W,beta,y,delta,alpha,FALSE,1)
+  update_W_cpp(X,M,H,W,beta,y,delta,alpha,FALSE,1)
 
-  expect_equal(fit1,fit2)
+  expect_equal(fit1,W)
 })
 
 test_that("calc_loss gives same results in R and cpp", {
@@ -375,6 +375,7 @@ test_that("optimize_loss_cpp converges", {
   y=runif(n,0,5)
   delta=rbinom(n,1,.5)
   alpha=.5
+  lambda=.1
   eta=1
   tol=1e-5
   maxit=10000
@@ -384,6 +385,32 @@ test_that("optimize_loss_cpp converges", {
   penalty='lasso'
   
   expect_no_warning(optimize_loss_cpp(X,M,H,W,beta,y,delta,alpha,lambda,eta,tol,maxit,
-                          verbose,WtX,norm_type,penalty))
+                          verbose,WtX,norm_type,penalty,FALSE))
 })
 
+
+test_that("run_coxNMF runs without warning", {
+  set.seed(123)
+  n=10
+  p=15
+  k=2
+  
+  X=matrix(runif(p*n,0,5),nrow=p,ncol=n)
+  M=matrix(1,nrow=p,ncol=n)
+  W=matrix(runif(p*k,0,5),nrow=p,ncol=k)
+  H=matrix(runif(k*n,0,5),nrow=k,ncol=n)
+  beta=rep(1,k)
+  y=runif(n,0,5)
+  delta=rbinom(n,1,.5)
+  alpha=.5
+  lambda=.05
+  eta=1
+  tol=1e-5
+  maxit=10000
+  verbose=FALSE
+  WtX=FALSE
+  norm_type=2
+  penalty='lasso'
+
+  expect_no_warning(run_coxNMF(X,y,delta,k,alpha,lambda,eta))
+})

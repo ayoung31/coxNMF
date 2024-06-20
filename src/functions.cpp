@@ -453,7 +453,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             const arma::colvec& delta, double alpha,
                             double lambda, double eta, double tol,
                             int maxit, bool verbose, bool WtX, int norm_type,
-                            String penalty){
+                            String penalty, bool init){
   arma::mat H = H0;
   arma::mat W = W0;
   arma::colvec beta = beta0;
@@ -479,7 +479,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     if(verbose){
       Rprintf("iter: %d eps: %.8f loss: %.8f\n",it,eps,loss);
     }
-    if(it == maxit){
+    if(it == maxit && !init){
       warning("coxNMF failed to converge");
     }
 
