@@ -13,3 +13,23 @@ calc_loss_cpp <- function(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX) {
     .Call(`_coxNMF_calc_loss_cpp`, X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX)
 }
 
+cdfit_cox_dh <- function(X, d, penalty, lambda, eps, max_iter, gamma, m, alpha, dfmax, user, warn) {
+    .Call(`_coxNMF_cdfit_cox_dh`, X, d, penalty, lambda, eps, max_iter, gamma, m, alpha, dfmax, user, warn)
+}
+
+cdfit_cox_dh_one_lambda <- function(X, d, penalty, lambda, eps, max_iter, m, alpha) {
+    .Call(`_coxNMF_cdfit_cox_dh_one_lambda`, X, d, penalty, lambda, eps, max_iter, m, alpha)
+}
+
+cdfit_cox_dh_one_lambda_it <- function(X, d, penalty, lambda, a, m, alpha) {
+    .Call(`_coxNMF_cdfit_cox_dh_one_lambda_it`, X, d, penalty, lambda, a, m, alpha)
+}
+
+update_beta_cpp <- function(X, y, penalty, alpha, lambda, beta0) {
+    .Call(`_coxNMF_update_beta_cpp`, X, y, penalty, alpha, lambda, beta0)
+}
+
+optimize_loss_cpp <- function(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty) {
+    .Call(`_coxNMF_optimize_loss_cpp`, X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty)
+}
+

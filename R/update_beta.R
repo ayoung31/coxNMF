@@ -8,7 +8,7 @@ update_beta <- function(H,W,X,M,y,delta,lambda,eta,WtX){
     pred = t(H)
   }
   
-  fit=glmnet::glmnet(pred,y_surv,family='cox',alpha = eta,lambda=lambda,maxit=1)
+  fit=glmnet::glmnet(pred,y_surv,family='cox',alpha = eta,lambda=lambda)
   
   return(as.numeric(coef(fit)))
 }
