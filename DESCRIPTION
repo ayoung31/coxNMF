@@ -15,7 +15,8 @@ Imports:
     NMF,
     Rcpp,
     RcppArmadillo,
-    survival
+    survival,
+    ncvreg
 LinkingTo:
     Rcpp,
     RcppArmadillo

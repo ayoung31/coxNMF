@@ -1,7 +1,7 @@
 #' @export
 cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
                       verbose = FALSE, norm_type = 2, tol = 1e-6, maxit = 10000,
-                      penalty = 'lasso', nfold = 5, perc_miss = .3, seed = 123){
+                      penalty = 'lasso', nfold = 5, perc_miss = .3, seed = 123,...){
   
   set.seed(seed)
   folds = get_folds(ncol(X), nfold)
@@ -34,7 +34,7 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
     
     # Run the model
     coxNMF = run_coxNMF(Train$X, Train$y, Train$delta, k, alpha, lambda, eta, 
-                        Train$M, WtX, verbose, norm_type, tol, maxit, penalty)
+                        Train$M, WtX, verbose, norm_type, tol, maxit, penalty,...)
     
     # save the fit
     fits[[i]] = coxNMF

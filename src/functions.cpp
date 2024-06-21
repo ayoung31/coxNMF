@@ -62,24 +62,32 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
 }
 
 // [[Rcpp::export]]
+double calc_surv_loss(const arma::mat& X, const arma::mat& W, 
+                      const arma::mat& H, const arma::vec& beta, const arma::vec& y,
+                      const arma::vec& delta, bool WtX){
+  int N = H.n_cols;
+  arma::colvec a1;
+  a1 = H.t() * beta;
+  // if (WtX) {
+  //   a1 = trans(W.t() * (M % X)) * beta;
+  // } else {
+  //   a1 = H.t() * beta;
+  // }
+  
+  arma::mat y_matrix = arma::repmat(y, 1, N);
+  arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
+  
+  return 2 * arma::accu(delta % (a1 - arma::log(ind.t() * arma::exp(a1)))) / N;
+}
+
+// [[Rcpp::export]]
 List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::mat& H,
                const arma::vec& beta, double alpha, const arma::vec& y, 
                const arma::vec& delta, double lambda, double eta, bool WtX) {
-  int N = H.n_cols;
+  
   
   double nmf_loss = arma::accu(arma::square(M % (X - W * H))) / arma::accu(M);
-  
-  arma::colvec a1;
-  if (WtX) {
-    a1 = trans(W.t() * (M % X)) * beta;
-  } else {
-    a1 = H.t() * beta;
-  }
-
-  arma::mat y_matrix = arma::repmat(y, 1, N);
-  arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
-
-  double surv_loss = 2 * arma::accu(delta % (a1 - arma::log(ind.t() * arma::exp(a1)))) / N;
+  double surv_loss = calc_surv_loss(X, W, H, beta, y, delta, WtX);
   double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + eta * arma::accu(arma::abs(beta)));
   double loss = nmf_loss - alpha * (surv_loss - penalty);
   

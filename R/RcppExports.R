@@ -9,6 +9,10 @@ update_W_cpp <- function(X, M, H, W, beta, y, delta, alpha, WtX, norm_type) {
     invisible(.Call(`_coxNMF_update_W_cpp`, X, M, H, W, beta, y, delta, alpha, WtX, norm_type))
 }
 
+calc_surv_loss <- function(X, W, H, beta, y, delta, WtX) {
+    .Call(`_coxNMF_calc_surv_loss`, X, W, H, beta, y, delta, WtX)
+}
+
 calc_loss_cpp <- function(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX) {
     .Call(`_coxNMF_calc_loss_cpp`, X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX)
 }

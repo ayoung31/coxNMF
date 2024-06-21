@@ -130,7 +130,7 @@ test_that("my cdfit_cox_dh gives same result as ncvsurv", {
   yy <- as.double(y[tOrder, 1])
   Delta <- y[tOrder, 2]
   n <- length(yy)
-  XX <- std(X[tOrder, , drop=FALSE])
+  XX <- ncvreg::std(X[tOrder, , drop=FALSE])
   if (sys.nframe() > 1 && sys.call(-1)[[1]]=="local_mfdr") return(list(X=XX, time=yy, fail=Delta))
   ns <- attr(XX, "nonsingular")
   penalty.factor <- penalty.factor[ns]
@@ -164,7 +164,7 @@ test_that("my cdfit_cox_dh gives same result as ncvsurv", {
   
   
   ### ncvsurv
-  beta2 = ncvsurv(X=X,y=y,penalty = penalty, lambda=lambda)$beta
+  beta2 = ncvreg::ncvsurv(X=X,y=y,penalty = penalty, lambda=lambda)$beta
   
   
   expect_equal(beta,beta2)
@@ -199,7 +199,7 @@ test_that("converting cdfit_cox_dh to only accept one lambda gives same result",
   yy <- as.double(y[tOrder, 1])
   Delta <- y[tOrder, 2]
   n <- length(yy)
-  XX <- std(X[tOrder, , drop=FALSE])
+  XX <- ncvreg::std(X[tOrder, , drop=FALSE])
   if (sys.nframe() > 1 && sys.call(-1)[[1]]=="local_mfdr") return(list(X=XX, time=yy, fail=Delta))
   ns <- attr(XX, "nonsingular")
   penalty.factor <- penalty.factor[ns]
@@ -291,7 +291,7 @@ test_that("cdfit_cox_dh_one_lambda_it with a=0 gives same result as cdfit_cox_dh
   yy <- as.double(y[tOrder, 1])
   Delta <- y[tOrder, 2]
   n <- length(yy)
-  XX <- std(X[tOrder, , drop=FALSE])
+  XX <- ncvreg::std(X[tOrder, , drop=FALSE])
   if (sys.nframe() > 1 && sys.call(-1)[[1]]=="local_mfdr") return(list(X=XX, time=yy, fail=Delta))
   ns <- attr(XX, "nonsingular")
   penalty.factor <- penalty.factor[ns]
@@ -338,7 +338,7 @@ test_that("update_beta_cpp gives same results as manual calculation in R", {
   yy <- as.double(y[tOrder, 1])
   Delta <- y[tOrder, 2]
   n <- length(yy)
-  XX <- std(X[tOrder, , drop=FALSE])
+  XX <- ncvreg::std(X[tOrder, , drop=FALSE])
   if (sys.nframe() > 1 && sys.call(-1)[[1]]=="local_mfdr") return(list(X=XX, time=yy, fail=Delta))
   ns <- attr(XX, "nonsingular")
   penalty.factor <- penalty.factor[ns]
