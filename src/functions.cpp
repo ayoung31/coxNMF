@@ -463,17 +463,10 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   double loss_prev;
   List l;
   arma::mat s = arma::join_horiz(y,delta);
-  Rprintf("tol: %f\n",tol);
-  Rprintf("loss: %f\n",loss);
-  Rprintf("eps: %f\n",eps);
     
 
   while(eps > tol && it <= maxit){
     loss_prev = loss;
-    Rprintf("tol: %f\n",tol);
-    Rprintf("loss: %f\n",loss);
-    Rprintf("eps: %f\n",eps);
-    Rprintf("loss_prev: %f\n",loss_prev);
     update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
     beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
