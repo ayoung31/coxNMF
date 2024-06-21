@@ -481,7 +481,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
     loss = l["loss"];
 
-    eps = abs(loss - loss_prev)/loss_prev;
+    eps = std::abs(loss - loss_prev)/loss_prev;
 
     it = it + 1;
     if(verbose){
