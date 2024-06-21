@@ -457,7 +457,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   arma::mat H = H0;
   arma::mat W = W0;
   arma::colvec beta = beta0;
-  double loss = 0;
+  double loss = 0.000001;
   double eps = 1;
   int it = 0;
   double loss_prev;
