@@ -37,7 +37,6 @@ void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
   return;
 }
 
-
 // [[Rcpp::export]]
 void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
                        arma::mat& W, const arma::colvec& beta, 
@@ -61,18 +60,14 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
   return;
 }
 
+//' @export
 // [[Rcpp::export]]
-double calc_surv_loss(const arma::mat& X, const arma::mat& W, 
+double calc_surv_loss(const arma::mat& X, const arma::mat& W,
                       const arma::mat& H, const arma::vec& beta, const arma::vec& y,
                       const arma::vec& delta, bool WtX){
   int N = H.n_cols;
   arma::colvec a1;
   a1 = H.t() * beta;
-  // if (WtX) {
-  //   a1 = trans(W.t() * (M % X)) * beta;
-  // } else {
-  //   a1 = H.t() * beta;
-  // }
   
   arma::mat y_matrix = arma::repmat(y, 1, N);
   arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
@@ -82,8 +77,8 @@ double calc_surv_loss(const arma::mat& X, const arma::mat& W,
 
 // [[Rcpp::export]]
 List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::mat& H,
-               const arma::vec& beta, double alpha, const arma::vec& y, 
-               const arma::vec& delta, double lambda, double eta, bool WtX) {
+                   const arma::vec& beta, double alpha, const arma::vec& y, 
+                   const arma::vec& delta, double lambda, double eta, bool WtX) {
   
   
   double nmf_loss = arma::accu(arma::square(M % (X - W * H))) / arma::accu(M);
@@ -97,7 +92,6 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, c
     Named("surv_loss") = surv_loss
   );
 }
-
 
 // Everything for updating beta below
 

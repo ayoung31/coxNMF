@@ -112,7 +112,7 @@ test_that("my cdfit_cox_dh gives same result as ncvsurv", {
   delta=rbinom(n,1,.5)
   n=nrow(X)
   p=ncol(X)
-  y=Surv(y,delta)
+  y=survival::Surv(y,delta)
   penalty='lasso'
   gamma=switch(penalty, SCAD=3.7, 3)
   alpha=1
@@ -181,7 +181,7 @@ test_that("converting cdfit_cox_dh to only accept one lambda gives same result",
   delta=rbinom(n,1,.5)
   n=nrow(X)
   p=ncol(X)
-  y=Surv(y,delta)
+  y=survival::Surv(y,delta)
   penalty='lasso'
   gamma=switch(penalty, SCAD=3.7, 3)
   alpha=1
@@ -273,7 +273,7 @@ test_that("cdfit_cox_dh_one_lambda_it with a=0 gives same result as cdfit_cox_dh
   delta=rbinom(n,1,.5)
   n=nrow(X)
   p=ncol(X)
-  y=Surv(y,delta)
+  y=survival::Surv(y,delta)
   penalty='lasso'
   gamma=switch(penalty, SCAD=3.7, 3)
   alpha=1
@@ -320,7 +320,7 @@ test_that("update_beta_cpp gives same results as manual calculation in R", {
   delta=rbinom(n,1,.5)
   n=nrow(X)
   p=ncol(X)
-  y=Surv(y,delta)
+  y=survival::Surv(y,delta)
   penalty='lasso'
   gamma=switch(penalty, SCAD=3.7, 3)
   alpha=1
