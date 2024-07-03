@@ -15,7 +15,9 @@ Imports:
     Rcpp,
     RcppArmadillo,
     survival,
-    ncvreg
+    ncvreg,
+    parallel,
+    foreach
 LinkingTo:
     Rcpp,
     RcppArmadillo

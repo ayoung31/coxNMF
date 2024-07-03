@@ -1,20 +1,17 @@
 #' @export
 cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
-                      verbose = FALSE, norm_type = 2, tol = 1e-6, maxit = 10000,
-                      penalty = 'lasso', nfold = 5, perc_miss = .3, seed = 123,...){
+                     verbose = FALSE, norm_type = 2, tol = 1e-6, maxit = 10000,
+                     penalty = 'lasso', nfold = 5, perc_miss = .3, seed = 123,
+                     ncore = NULL, ...){
+  
+  if(is.null(ncore)){
+    ncore = detectCores() - 1
+  }
   
   set.seed(seed)
   folds = get_folds(ncol(X), nfold)
   
-  fits = list()
-  Hval = list()
-  cval = numeric()
-  ctrain = numeric()
-  rtrain = numeric()
-  rmask = numeric()
-  Trains = list()
-  Vals = list()
-  metric = numeric()
+  metrics = list()
   for(i in 1:nfold){
     Train = list()
     Val = list()
@@ -28,44 +25,88 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
     # within Train$X sample ~30% of cells to be missing
     Train$M = get_mask(Train, perc_miss)
     
-    # save train and val datasets
-    Trains[[i]] = Train
-    Vals[[i]] = Val
+    registerDoParallel(ncore)
     
-    # Run the model
-    coxNMF = run_coxNMF(Train$X, Train$y, Train$delta, k, alpha, lambda, eta, 
-                        Train$M, WtX, verbose, norm_type, tol, maxit, penalty,...)
+    # start loop over k, alpha, eta here
+    metrics[[i]] = foreach(K=k, .combine='rbind', .inorder = FALSE, .errorhandling = "remove", .packages = 'coxNMF') %:%
+      foreach(a=alpha, .combine='rbind', .inorder = FALSE, .errorhandling = "remove", .packages = 'coxNMF') %:%
+        foreach(e=eta, .combine='rbind', .inorder = FALSE, .errorhandling = "remove", .packages = 'coxNMF') %dopar% {
+          # initialization
+          lambda = lambda[order(lambda)]
+          if(lambda[1] != 0){
+            lambda = c(0,lambda)
+          }
+          
+          
+          rtrain = numeric()
+          rmask = numeric()
+          ctrain = numeric()
+          cval = numeric()
+          strain = numeric()
+          sval = numeric()
+          ltrain = numeric()
+          lval = numeric()
+          metric = numeric()
+          j = 1
+          # warm start lambda
+          for(l in lambda){
+            if(l==0){
+              coxNMF = run_coxNMF(Train$X, Train$y, Train$delta, K, a, l, e, 
+                                  Train$M, WtX, verbose, norm_type, tol, maxit, penalty,...)
+            }else{
+              coxNMF = optimize_loss_cpp(Train$X, Train$M, coxNMF$H, coxNMF$W, 
+                                         coxNMF$beta, Train$y, Train$delta, a, 
+                                         l, e, tol, maxit, verbose, WtX, 
+                                         norm_type, penalty, FALSE)
+            }
+            
+            
+            ## Compute metrics
+            
+            # reconstruction error
+            rtrain[j] = coxNMF$loss$nmf_loss
+            if(sum(1-Train$M)!=0){
+              rmask[j] = norm((1-Train$M)*(Train$X-coxNMF$W%*%coxNMF$H),'F')^2 / sum(1-Train$M)
+            }else{
+              rmask[j] = NA # if we didn't do any masking there is no rmask
+            }
+            
+            # cindex
+            if(WtX){
+              ctrain[j] = cvwrapr::getCindex(t(t(coxNMF$W)%*%Train$X)%*%coxNMF$beta,Surv(Train$y,Train$delta))
+              Hval = t(coxNMF$W)%*%Val$X # Hval is irrelevant for WtX version
+            }else{
+              ctrain[j] = cvwrapr::getCindex(t(coxNMF$H)%*%coxNMF$beta,Surv(Train$y,Train$delta))
+              Hval = NMF::.fcnnls(coxNMF$W,Val$X)$coef
+            }
+            cval[j] = cvwrapr::getCindex(t(Hval)%*%coxNMF$beta,Surv(Val$y,Val$delta))
+            
+            # loss
+            strain[j] = coxNMF$loss$surv_loss
+            sval[j] = calc_surv_loss(Val$X,coxNMF$W,Hval,coxNMF$beta,Val$y,Val$delta,FALSE)
+            
+            ltrain[j] = coxNMF$loss$loss
+            lval[j] = rmask[j] - alpha * sval[j]
+            
+            # our metric
+            metric[j] = cval[j]/rmask[j]
+            
+            j = j+1
+          }# end warm start lambda
+          
+          data.frame(rtrain=rtrain, rmask=rmask, ctrain=ctrain, cval=cval,
+                     strain=strain, sval=sval, ltrain=ltrain, lval=lval, 
+                     metric = metric, lambda = lambda, eta = e, alpha = a, 
+                     k = K, fold = i)
+        }
     
-    # save the fit
-    fits[[i]] = coxNMF
-    
-    ## Compute metrics
-    
-    # reconstruction error
-    rtrain[i] = coxNMF$loss$nmf_loss
-    if(sum(1-Train$M)!=0){
-      rmask[i] = norm((1-Train$M)*(Train$X-coxNMF$W%*%coxNMF$H),'F')^2 / sum(1-Train$M)
-    }else{
-      rmask[i] = NA # if we didn't do any masking there is no rmask
-    }
-    
-    # cindex
-    if(WtX){
-      ctrain[i] = cvwrapr::getCindex(t(t(coxNMF$W)%*%Train$X)%*%coxNMF$beta,Surv(Train$y,Train$delta))
-      Hval[[i]] = t(coxNMF$W)%*%Val$X # Hval is irrelevant for WtX version
-    }else{
-      ctrain[i] = cvwrapr::getCindex(t(coxNMF$H)%*%coxNMF$beta,Surv(Train$y,Train$delta))
-      Hval[[i]] = NMF::.fcnnls(coxNMF$W,Val$X)$coef
-    }
-    cval[i] = cvwrapr::getCindex(t(Hval[[i]])%*%coxNMF$beta,Surv(Val$y,Val$delta))
-    
-    # our metric
-    metric[i] = cval[i]/rmask[i]
-    
+    stopImplicitCluster()
+      
     print(sprintf('Fold %d complete', i))
     
   }
   
-  metrics = list(ctrain=ctrain,cval=cval,rtrain=rtrain,rmask=rmask,metric=metric)
-  return(list(fits=fits,Hval=Hval,metrics=metrics,Vals=Vals))
+  metrics = do.call('rbind',metrics)
+  
+  return(metrics)
 }
