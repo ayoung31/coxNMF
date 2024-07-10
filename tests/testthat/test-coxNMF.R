@@ -411,6 +411,8 @@ test_that("run_coxNMF runs without warning", {
   WtX=FALSE
   norm_type=2
   penalty='lasso'
+  
+  test=cv.coxNMF(X,y,delta,k,alpha,lambda,eta,ncore=1)
 
   expect_no_warning(run_coxNMF(X,y,delta,k,alpha,lambda,eta))
 })

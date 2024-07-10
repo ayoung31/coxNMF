@@ -34,6 +34,7 @@ update_beta_cpp <- function(X, y, penalty, alpha, lambda, beta0) {
     .Call(`_coxNMF_update_beta_cpp`, X, y, penalty, alpha, lambda, beta0)
 }
 
+#' @export
 optimize_loss_cpp <- function(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init) {
     .Call(`_coxNMF_optimize_loss_cpp`, X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init)
 }

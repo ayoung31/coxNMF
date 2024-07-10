@@ -447,7 +447,7 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
   return beta;
 }
 
-
+//' @export
 // [[Rcpp::export]]
 List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             const arma::mat& H0, const arma::mat& W0,

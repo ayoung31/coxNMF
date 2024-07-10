@@ -1,3 +1,4 @@
+#' @importFrom foreach %dopar%
 #' @export
 cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
                      verbose = FALSE, norm_type = 2, tol = 1e-6, maxit = 10000,
@@ -10,6 +11,10 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
   
   set.seed(seed)
   folds = get_folds(ncol(X), nfold)
+  
+  cl = parallel::makeCluster(ncore)
+  doParallel::registerDoParallel(cl)
+  parallel::clusterCall(cl, function(x) .libPaths(x), .libPaths())
   
   metrics = list()
   for(i in 1:nfold){
@@ -25,12 +30,11 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
     # within Train$X sample ~30% of cells to be missing
     Train$M = get_mask(Train, perc_miss)
     
-    registerDoParallel(ncore)
     
     # start loop over k, alpha, eta here
-    metrics[[i]] = foreach(K=k, .combine='rbind', .inorder = FALSE, .errorhandling = "remove", .packages = 'coxNMF') %:%
-      foreach(a=alpha, .combine='rbind', .inorder = FALSE, .errorhandling = "remove", .packages = 'coxNMF') %:%
-        foreach(e=eta, .combine='rbind', .inorder = FALSE, .errorhandling = "remove", .packages = 'coxNMF') %dopar% {
+    metrics[[i]] = foreach(K=k, .inorder = FALSE, .combine = 'rbind', .errorhandling = 'remove') %:%
+      foreach(a=alpha, .inorder = FALSE, .combine = 'rbind', .errorhandling = 'remove') %:%
+        foreach(e=eta, .inorder = FALSE, .combine = 'rbind', .errorhandling = 'remove') %dopar% {
           # initialization
           lambda = lambda[order(lambda)]
           if(lambda[1] != 0){
@@ -52,7 +56,9 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
           for(l in lambda){
             if(l==0){
               coxNMF = run_coxNMF(Train$X, Train$y, Train$delta, K, a, l, e, 
-                                  Train$M, WtX, verbose, norm_type, tol, maxit, penalty,...)
+                                  M=Train$M, WtX=WtX, verbose=verbose, 
+                                  norm_type=norm_type, tol=tol, maxit=maxit, 
+                                  penalty=penalty)
             }else{
               coxNMF = optimize_loss_cpp(Train$X, Train$M, coxNMF$H, coxNMF$W, 
                                          coxNMF$beta, Train$y, Train$delta, a, 
@@ -73,13 +79,13 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
             
             # cindex
             if(WtX){
-              ctrain[j] = cvwrapr::getCindex(t(t(coxNMF$W)%*%Train$X)%*%coxNMF$beta,Surv(Train$y,Train$delta))
+              ctrain[j] = cvwrapr::getCindex(t(t(coxNMF$W)%*%Train$X)%*%coxNMF$beta,survival::Surv(Train$y,Train$delta))
               Hval = t(coxNMF$W)%*%Val$X # Hval is irrelevant for WtX version
             }else{
-              ctrain[j] = cvwrapr::getCindex(t(coxNMF$H)%*%coxNMF$beta,Surv(Train$y,Train$delta))
+              ctrain[j] = cvwrapr::getCindex(t(coxNMF$H)%*%coxNMF$beta,survival::Surv(Train$y,Train$delta))
               Hval = NMF::.fcnnls(coxNMF$W,Val$X)$coef
             }
-            cval[j] = cvwrapr::getCindex(t(Hval)%*%coxNMF$beta,Surv(Val$y,Val$delta))
+            cval[j] = cvwrapr::getCindex(t(Hval)%*%coxNMF$beta,survival::Surv(Val$y,Val$delta))
             
             # loss
             strain[j] = coxNMF$loss$surv_loss
@@ -100,11 +106,12 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
                      k = K, fold = i)
         }
     
-    stopImplicitCluster()
+    
       
     print(sprintf('Fold %d complete', i))
     
   }
+  parallel::stopCluster(cl)
   
   metrics = do.call('rbind',metrics)
   
