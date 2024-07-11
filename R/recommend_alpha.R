@@ -23,5 +23,6 @@ recommend_alpha <- function(X,M,y,delta,k,nalpha,maxit=15,WtX,eta=0,lambda=0, no
   alpha_grid <- c(alpha5050*grid,alpha5050,alpha5050/grid)
   alpha_grid = alpha_grid[order(alpha_grid)]
   alpha_grid = round(alpha_grid,3)
+  alpha_grid = alpha_grid[order(alpha_grid)]
   return(list(alpha5050=alpha5050, alpha_grid=alpha_grid))
 }
