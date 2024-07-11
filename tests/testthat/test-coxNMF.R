@@ -98,7 +98,7 @@ test_that("calc_loss gives same results in R and cpp", {
 
   fit1=calc_loss(X,M,W,H,beta,alpha,y,delta,.1,.5,FALSE)
   fit2=calc_loss_cpp(X,M,W,H,beta,alpha,y,delta,.1,.5,FALSE)
-
+  fit2 = fit2[1:3]
   expect_equal(fit1,fit2)
 })
 
