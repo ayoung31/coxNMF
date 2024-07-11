@@ -89,7 +89,8 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, c
   return List::create(
     Named("loss") = loss,
     Named("nmf_loss") = nmf_loss,
-    Named("surv_loss") = surv_loss
+    Named("surv_loss") = surv_loss,
+    Named("penalty") = penalty
   );
 }
 
