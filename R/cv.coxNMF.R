@@ -115,5 +115,15 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
   
   metrics = do.call('rbind',metrics)
   
-  return(metrics)
+  met_mean = metrics %>% group_by(k,alpha,lambda,eta) %>%
+    summarise(met = mean(metric))
+  
+  k = met_mean$k[which.max(met_mean$met)]
+  alpha = met_mean$alpha[which.max(met_mean$met)]
+  lambda = met_mean$lambda[which.max(met_mean$met)]
+  eta = met_mean$eta[which.max(met_mean$met)]
+  
+  fit = run_coxNMF(X,y,delta,k,alpha,lambda,eta)
+  
+  return(list(metrics=metrics, final_fit=fit))
 }
