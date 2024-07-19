@@ -58,7 +58,7 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
               coxNMF = run_coxNMF(Train$X, Train$y, Train$delta, K, a, l, e, 
                                   M=Train$M, WtX=WtX, verbose=verbose, 
                                   norm_type=norm_type, tol=tol, maxit=maxit, 
-                                  penalty=penalty)
+                                  penalty=penalty,...)
             }else{
               coxNMF = optimize_loss_cpp(Train$X, Train$M, coxNMF$H, coxNMF$W, 
                                          coxNMF$beta, Train$y, Train$delta, a, 
