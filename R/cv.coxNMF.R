@@ -3,7 +3,7 @@
 cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
                      verbose = FALSE, norm_type = 2, tol = 1e-6, maxit = 10000,
                      penalty = 'lasso', nfold = 5, perc_miss = .3, seed = 123,
-                     ncore = NULL, ninit.cv = 10, ...){
+                     ncore = NULL, ...){
   
   if(is.null(ncore)){
     ncore = detectCores() - 1
@@ -58,7 +58,7 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
               coxNMF = run_coxNMF(Train$X, Train$y, Train$delta, K, a, l, e, 
                                   M=Train$M, WtX=WtX, verbose=verbose, 
                                   norm_type=norm_type, tol=tol, maxit=maxit, 
-                                  penalty=penalty,ninit=ninit.cv)
+                                  penalty=penalty,ninit=10)
             }else{
               coxNMF = optimize_loss_cpp(Train$X, Train$M, coxNMF$H, coxNMF$W, 
                                          coxNMF$beta, Train$y, Train$delta, a, 
@@ -123,7 +123,7 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
   lambda = met_mean$lambda[which.max(met_mean$met)]
   eta = met_mean$eta[which.max(met_mean$met)]
   
-  fit = run_coxNMF(X,y,delta,k,alpha,lambda,eta,...)
+  fit = run_coxNMF(X,y,delta,k,alpha,lambda,eta,ninit)
   
   return(list(metrics=metrics, final_fit=fit))
 }
