@@ -36,9 +36,12 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
       foreach(a=alpha, .inorder = FALSE, .combine = 'rbind', .errorhandling = 'remove') %:%
         foreach(e=eta, .inorder = FALSE, .combine = 'rbind', .errorhandling = 'remove') %dopar% {
           # initialization
-          lambda = lambda[order(lambda)]
-          if(lambda[1] != 0){
-            lambda = c(0,lambda)
+          lam = lambda[order(lambda)]
+          if(lam[1] != 0){
+            lam = c(0,lam)
+          }
+          if(alpha==0){
+            lam=0
           }
           
           
@@ -53,7 +56,7 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
           metric = numeric()
           j = 1
           # warm start lambda
-          for(l in lambda){
+          for(l in lam){
             if(l==0){
               coxNMF = run_coxNMF(Train$X, Train$y, Train$delta, K, a, l, e, 
                                   M=Train$M, WtX=WtX, verbose=verbose, 
@@ -102,7 +105,7 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
           
           data.frame(rtrain=rtrain, rmask=rmask, ctrain=ctrain, cval=cval,
                      strain=strain, sval=sval, ltrain=ltrain, lval=lval, 
-                     metric = metric, lambda = lambda, eta = e, alpha = a, 
+                     metric = metric, lambda = lam, eta = e, alpha = a, 
                      k = K, fold = i)
         }
     
