@@ -40,7 +40,7 @@ cv.coxNMF = function(X, y, delta, k, alpha, lambda, eta, WtX = FALSE,
           if(lam[1] != 0){
             lam = c(0,lam)
           }
-          if(alpha==0){
+          if(a==0){
             lam=0
           }
           
