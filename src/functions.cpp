@@ -485,18 +485,9 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
     beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
-    
-    Rcout << "W" << W << "\n";
-    Rcout << "H" << H << "\n";
-    Rcout << "beta" << beta << "\n";
-    Rcout << "colmax" << max(W, 0) << "\n";
-  
+
     // standardize
     standardize(W,H,beta,norm_type);
-    
-    Rcout << "W" << W << "\n";
-    Rcout << "H" << H << "\n";
-    Rcout << "beta" << beta << "\n";
     
 
     l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
