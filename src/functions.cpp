@@ -49,13 +49,13 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
   }
   
   
-  if(norm_type == 1){
-    arma::colvec row_sums = sum(W, 1);
-    W.each_col() /= row_sums;
-  }else if(norm_type == 2){
-    arma::rowvec col_sums = sum(W, 0);
-    W.each_row() /= col_sums;
-  }
+  // if(norm_type == 1){
+  //   arma::colvec row_sums = sum(W, 1);
+  //   W.each_col() /= row_sums;
+  // }else if(norm_type == 2){
+  //   arma::rowvec col_sums = sum(W, 0);
+  //   W.each_row() /= col_sums;
+  // }
   
   return;
 }
@@ -450,6 +450,18 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
 
 //' @export
 // [[Rcpp::export]]
+void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type){
+  
+  arma::rowvec col_max = max(W, 0);
+  W.each_row() /= col_max;
+  H.each_col() %= col_max.t();
+  beta /= col_max.t();
+  
+  return;
+}
+
+//' @export
+// [[Rcpp::export]]
 List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             const arma::mat& H0, const arma::mat& W0,
                             const arma::colvec& beta0, const arma::colvec& y,
@@ -473,6 +485,19 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
     beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
+    
+    Rcout << "W" << W << "\n";
+    Rcout << "H" << H << "\n";
+    Rcout << "beta" << beta << "\n";
+    Rcout << "colmax" << max(W, 0) << "\n";
+  
+    // standardize
+    standardize(W,H,beta,norm_type);
+    
+    Rcout << "W" << W << "\n";
+    Rcout << "H" << H << "\n";
+    Rcout << "beta" << beta << "\n";
+    
 
     l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
     loss = l["loss"];
