@@ -506,7 +506,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
     if(WtX){
-      beta = update_beta_cpp((M % X) * W, s,penalty,eta,lambda,beta);
+      beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
     }else{
       beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }

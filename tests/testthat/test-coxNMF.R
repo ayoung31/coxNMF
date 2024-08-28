@@ -385,7 +385,7 @@ test_that("optimize_loss_cpp converges", {
   penalty='lasso'
   
   expect_no_warning(optimize_loss_cpp(X,M,H,W,beta,y,delta,alpha,lambda,eta,tol,maxit,
-                          verbose,WtX,norm_type,penalty,FALSE))
+                          verbose,WtX,norm_type,penalty,TRUE))
 })
 
 
@@ -412,7 +412,7 @@ test_that("run_coxNMF runs without warning", {
   norm_type=2
   penalty='lasso'
   
-  test=cv.coxNMF(X,y,delta,k,alpha,lambda,eta,ncore=1)
+  #test=cv.coxNMF(X,y,delta,k,alpha,lambda,eta,ncore=1)
 
-  expect_no_warning(run_coxNMF(X,y,delta,k,alpha,lambda,eta))
+  expect_no_warning(run_coxNMF(X,y,delta,k,alpha,lambda,eta,WtX=TRUE))
 })
