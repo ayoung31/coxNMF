@@ -39,7 +39,7 @@ test_that("WtX update_H R and cpp give same result", {
   expect_equal(fit1,H)
 })
 
-test_that("update_W R and cpp give same result column normalization", {
+test_that("update_W R and cpp give same result", {
   set.seed(123)
   n=10
   p=15
@@ -60,7 +60,7 @@ test_that("update_W R and cpp give same result column normalization", {
   expect_equal(fit1,W)
 })
 
-test_that("update_W R and cpp give same result row normalization", {
+test_that("update_W R and cpp give same result WtX", {
   set.seed(123)
   n=10
   p=15
@@ -75,8 +75,8 @@ test_that("update_W R and cpp give same result row normalization", {
   delta=rbinom(n,1,.5)
   alpha=.5
 
-  fit1=update_W(X,M,H,W,beta,y,delta,alpha,FALSE,1)
-  update_W_cpp(X,M,H,W,beta,y,delta,alpha,FALSE,1)
+  fit1=update_W(X,M,H,W,beta,y,delta,alpha,TRUE,1)
+  update_W_cpp(X,M,H,W,beta,y,delta,alpha,TRUE,1)
 
   expect_equal(fit1,W)
 })

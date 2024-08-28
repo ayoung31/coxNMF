@@ -45,7 +45,22 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
   if(!WtX){
     W = W % ((M % X) * H.t()) / ((M % (W * H)) * H.t());
   }else{
-    //Need to update
+    int N = H.n_cols;
+    int s = arma::accu(M);
+    
+    // linear predictor
+    arma::vec lp = exp(trans(M % X) * W * beta);
+
+    // Indicator matrix
+    arma::mat y_matrix = arma::repmat(y, 1, N);
+    arma::mat I = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
+    
+    // derivative of log likelihood
+    arma::mat P = diagmat(lp);
+    arma::mat l = arma::kron((M % X) * (arma::eye(N,N) - P*I*inv(diagmat(I.t() * lp))) * delta,beta.t());
+    
+    arma::mat Ht = H.t();
+    W = W % (((M % X) * Ht + (alpha * s / N) * arma::clamp(l, 0, arma::datum::inf)) / ((M % (W*H)) * Ht));
   }
   
   
@@ -62,17 +77,23 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
 
 //' @export
 // [[Rcpp::export]]
-double calc_surv_loss(const arma::mat& X, const arma::mat& W,
+double calc_surv_loss(const arma::mat& X, const arma::mat& M, const arma::mat& W,
                       const arma::mat& H, const arma::vec& beta, const arma::vec& y,
                       const arma::vec& delta, bool WtX){
   int N = H.n_cols;
-  arma::colvec a1;
-  a1 = H.t() * beta;
+  arma::colvec lp;
+  
+  if(!WtX){
+    lp = H.t() * beta;
+  }else{
+    lp = trans(M % X) * W * beta;
+  }
   
   arma::mat y_matrix = arma::repmat(y, 1, N);
   arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
   
-  return 2 * arma::accu(delta % (a1 - arma::log(ind.t() * arma::exp(a1)))) / N;
+  return 2 * arma::accu(delta % (lp - arma::log(ind.t() * arma::exp(lp)))) / N;
+  
 }
 
 // [[Rcpp::export]]
@@ -82,7 +103,7 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, c
   
   
   double nmf_loss = arma::accu(arma::square(M % (X - W * H))) / arma::accu(M);
-  double surv_loss = calc_surv_loss(X, W, H, beta, y, delta, WtX);
+  double surv_loss = calc_surv_loss(X, M, W, H, beta, y, delta, WtX);
   double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + eta * arma::accu(arma::abs(beta)));
   double loss = nmf_loss - alpha * (surv_loss - penalty);
   
@@ -484,7 +505,12 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     loss_prev = loss;
     update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
-    beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
+    if(WtX){
+      beta = update_beta_cpp((M % X) * W, s,penalty,eta,lambda,beta);
+    }else{
+      beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
+    }
+    
 
     // standardize
     standardize(W,H,beta,norm_type);
