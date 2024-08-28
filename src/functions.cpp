@@ -473,10 +473,15 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
 // [[Rcpp::export]]
 void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type){
   
-  arma::rowvec col_max = max(W, 0);
-  W.each_row() /= col_max;
-  H.each_col() %= col_max.t();
-  beta /= col_max.t();
+  // arma::rowvec col_max = max(W, 0);
+  // W.each_row() /= col_max;
+  // H.each_col() %= col_max.t();
+  // beta /= col_max.t();
+  
+    arma::rowvec col_sums = sum(W, 0);
+    W.each_row() /= col_sums;
+    H.each_col() %= col_sums.t();
+    beta /= col_sums.t();
   
   return;
 }
