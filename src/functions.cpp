@@ -54,11 +54,11 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
     // Indicator matrix
     arma::mat y_matrix = arma::repmat(y, 1, N);
     arma::mat I = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
-    
+
     // derivative of log likelihood
     arma::mat P = diagmat(lp);
     arma::mat l = arma::kron((M % X) * (arma::eye(N,N) - P*I*inv(diagmat(I.t() * lp))) * delta,beta.t());
-    
+
     arma::mat Ht = H.t();
     W = W % (((M % X) * Ht + (alpha * s / N) * arma::clamp(l, 0, arma::datum::inf)) / ((M % (W*H)) * Ht));
   }
@@ -457,10 +457,10 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
 
   arma::vec penalty_factor = arma::ones<arma::vec>(p);
   penalty_factor = penalty_factor.elem(ns);
+  
   // perform coordinate descent
   arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, penalty, lambda,
                                            beta0, penalty_factor, alpha);
-
   // Unstandardize coefficients
   arma::vec beta = arma::zeros<arma::vec>(X.n_cols);
   arma::vec bb = b / sdX.t();
@@ -515,7 +515,6 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     }else{
       beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }
-    
 
     // standardize
     standardize(W,H,beta,norm_type);
