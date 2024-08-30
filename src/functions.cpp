@@ -30,8 +30,8 @@ void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
     
     // H update
     H = (H / (Wt * (M % (W * H)))) % 
-      ((Wt * (M % X)) + (alpha * arma::accu(M) / N) * 
-      arma::clamp(l, 0, arma::datum::inf));
+      arma::clamp((Wt * (M % X)) + (alpha * arma::accu(M) / N) * 
+      l,0,arma::datum::inf);
   }
   
   return;
@@ -60,7 +60,13 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H,
     arma::mat l = arma::kron((M % X) * (arma::eye(N,N) - P*I*inv(diagmat(I.t() * lp))) * delta,beta.t());
 
     arma::mat Ht = H.t();
-    W = W % (((M % X) * Ht + (alpha * s / N) * arma::clamp(l, 0, arma::datum::inf)) / ((M % (W*H)) * Ht));
+    // arma::mat temp1 = (M % X) * Ht;
+    // arma::mat temp2 = (alpha * s / N) * l;
+    // arma::mat temp3 = temp1 + temp2;
+    // Rcout << temp1.rows(0,10) << "\n\n";
+    // Rcout << temp2.rows(0,10) << "\n\n";
+    // Rcout << temp3.rows(0,10) << "\n\n";
+    W = W % (arma::clamp((M % X) * Ht + (alpha * s / N) * l, 0, arma::datum::inf) / ((M % (W*H)) * Ht));
   }
   
   
@@ -473,15 +479,19 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
 // [[Rcpp::export]]
 void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type){
   
-  // arma::rowvec col_max = max(W, 0);
-  // W.each_row() /= col_max;
-  // H.each_col() %= col_max.t();
-  // beta /= col_max.t();
+  arma::rowvec col_max = max(W, 0);
+  W.each_row() /= col_max;
+  H.each_col() %= col_max.t();
+  beta /= col_max.t();
   
-    arma::rowvec col_sums = sum(W, 0);
-    W.each_row() /= col_sums;
-    H.each_col() %= col_sums.t();
-    beta /= col_sums.t();
+    // arma::rowvec col_sums = sum(W, 0);
+    // W.each_row() /= col_sums;
+    // H.each_col() %= col_sums.t();
+    // beta /= col_sums.t();
+    
+  // arma::colvec row_sums = sum(W,1);
+  // W.each_col() /= row_sums;
+  // H.each_row() 
   
   return;
 }
