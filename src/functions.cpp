@@ -480,16 +480,14 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
 void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
                  bool WtX){
   
+  arma::rowvec col_max = max(W, 0);
+  W.each_row() /= col_max;
+  H.each_col() %= col_max.t();
+  
   if(WtX){
-    arma::rowvec col_max = max(W, 0);
-    W.each_row() /= col_max;
-    H.each_col() %= col_max.t();
     beta %= col_max.t();
   }else{
-    arma::colvec row_max = max(H, 1);
-    H.each_col() /= row_max;
-    W.each_row() %= row_max.t();
-    beta %= row_max;
+    beta /= col_max.t();
   }
   
   
