@@ -1,7 +1,14 @@
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <cmath>
+#include <LBFGSB.h>
+#include <iostream>
+
 // [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
+using Eigen::VectorXd;
+
+
 
 // [[Rcpp::export]]
 void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
@@ -120,6 +127,83 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, c
     Named("penalty") = penalty
   );
 }
+
+class Hupdate
+{
+private:
+  const arma::mat& M;
+  const arma::mat& X;
+  const arma::vec& y;
+  const arma::vec& delta;
+  arma::mat& W;
+  arma::vec& beta;
+  double alpha;
+  double lambda;
+  double eta;
+  bool WtX;
+public:
+  
+  Hupdate(const arma::mat& M_, const arma::mat& X_, const arma::vec& y_,
+          const arma::vec& delta_, arma::mat& W_,
+          arma::vec& beta_, double alpha_, double lambda_,
+          double eta_, bool WtX_) : M(M_), X(X_), y(y_), delta(delta_), W(W_), beta(beta_),
+          alpha(alpha_), lambda(lambda_), eta(eta_), WtX(WtX_) {}
+  double operator()(const VectorXd& x, VectorXd& grad)
+  {
+    double fx = 0.0;
+    
+    
+    int s = arma::accu(M);
+    int k = W.n_cols;
+    int n = X.n_cols;
+    
+    //create H from x
+    //convert eigen vector x to std vector
+    std::vector<double> xstd(x.data(), x.data() + x.size());
+    //convert std vector to arma vector
+    arma::vec xarma = arma::conv_to< arma::colvec >::from(xstd);
+    //create H by stacking arma vector into columns
+    arma::mat H = arma::reshape(xarma,k,n);
+    int N = H.n_cols;
+    
+    // COMPUTE GRADIENT
+    // linear predictor
+    arma::vec lp = exp(H.t() * beta);
+    // Indicator matrix
+    arma::mat y_matrix = arma::repmat(y, 1, N);
+    arma::mat I = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
+    // intermediate matrix
+    arma::mat temp = I.t() % arma::repmat(lp.t(),N,1) / arma::repmat(I.t() * lp, 1, N);
+    // derivative of log likelihood
+    arma::rowvec delta_t = delta.t();
+    arma::mat l = arma::kron(delta.t() - (delta.t() * temp),beta);
+    // compute gradient in matrix form
+    arma::mat nmf = W.t() * (M % (W*H - X)) * (2.0/s);
+    arma::mat like = alpha * 2 * l / N;
+    arma::mat gradient = nmf - like;
+    // convert to armadillo vector
+    arma::vec v = arma::vectorise(gradient);
+    // convert to standard vector
+    std::vector<double> v2 = arma::conv_to < std::vector<double> >::from(v);
+    // convert to eigen vectorXd
+    grad = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(v2.data(), v2.size());
+    
+    // Rcout << "nmf:\n" << nmf.submat(0,0,5-1,0) << "\n";
+    // Rcout << "like:\n" << like.submat(0,0,5-1,0) << "\n";
+    // Rcout << "grad:\n" << gradient.submat(0,0,5-1,0) << "\n";
+    // Rcout << "s:\n" << s << "\n";
+    
+    //COMPUTE FUNCTION VALUE
+    List loss = calc_loss_cpp(X,M,W,H,beta,alpha,y,delta,lambda,eta,WtX);
+    fx = loss["loss"];
+    return fx;
+  }
+  
+  void set_value(arma::mat& W_, arma::mat& beta_){
+    beta=beta_;
+    W=W_;
+  }
+};
 
 // Everything for updating beta below
 
@@ -450,7 +534,6 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
   arma::vec yy = arma::conv_to<arma::vec>::from(y.col(0)).elem(tOrder);
   arma::vec Delta = arma::conv_to<arma::vec>::from(y.col(1)).elem(tOrder);
   arma::mat XX = X.rows(tOrder);
-
   // Standardize X
   arma::rowvec meanX = arma::mean(XX, 0);
   arma::rowvec sdX = arma::stddev(XX, 1, 0); // using unbiased estimator
@@ -458,7 +541,6 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
   XX.each_row() /= sdX;
   arma::uvec ns = arma::find(sdX > .000001);
   XX = XX.cols(ns);
-
   int p = XX.n_cols;
 
   arma::vec penalty_factor = arma::ones<arma::vec>(p);
@@ -467,6 +549,7 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
   // perform coordinate descent
   arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, penalty, lambda,
                                            beta0, penalty_factor, alpha);
+
   // Unstandardize coefficients
   arma::vec beta = arma::zeros<arma::vec>(X.n_cols);
   arma::vec bb = b / sdX.t();
@@ -514,27 +597,71 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             String penalty, bool init){
   arma::mat H = H0;
   arma::mat W = W0;
+  
   arma::colvec beta = beta0;
+  
+  int N = H.n_cols;
+  int k = H.n_rows;
+  
   double loss = 0.000001;
   double eps = 1;
   int it = 0;
   double loss_prev;
   List l;
   arma::mat s = arma::join_horiz(y,delta);
-    
+  
+  LBFGSpp::LBFGSBParam<double> param;
+  param.epsilon = 1e-6;
+  param.max_iterations = 100;
+  double fx;
+  // Create solver and function object
+  LBFGSpp::LBFGSBSolver<double> solver(param);
+  // Declare function object Hupdate
+  Hupdate fun(M,X,y,delta,W,beta,alpha,lambda,eta,WtX);
+  
+  // bounds for constrained optimization
+  VectorXd lb = VectorXd::Constant(N*k, 0.0);
+  VectorXd ub = VectorXd::Constant(N*k, std::numeric_limits<double>::infinity());
 
+  // declare intermediate vectors
+  arma::vec xarma;
+  std::vector<double> xstd;
+  VectorXd x;
+  std::vector<double> xstd2;
+  arma::vec xarma2;
+  
   while(eps > tol && it <= maxit){
     loss_prev = loss;
     update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
-    update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
     if(WtX){
       beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
     }else{
       beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }
 
+    fun.set_value(W,beta);
+    
+    //update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
+    // convert H to arma::vec
+    xarma = arma::vectorise(H);
+    // convert to standard vector
+    xstd = arma::conv_to < std::vector<double> >::from(xarma);
+    // convert to eigen vectorXd
+    x = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(xstd.data(), xstd.size());
+    
+    int niter = solver.minimize(fun, x, fx, lb, ub);
+    //now convert x back to H
+    //convert eigen vector x to std vector
+    xstd2.assign(x.data(), x.data() + x.size());
+    // //convert std vector to arma vector
+    xarma2 = arma::conv_to< arma::colvec >::from(xstd2);
+    // //create H by stacking arma vector into columns
+    H = arma::reshape(xarma2,k,N);
+    
+
     // standardize
     standardize(W,H,beta,norm_type,WtX);
+    
     
 
     l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
