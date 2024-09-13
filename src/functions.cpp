@@ -1,7 +1,7 @@
 #include <RcppArmadillo.h>
 #include <RcppEigen.h>
 #include <cmath>
-#include <LBFGSB.h>
+#include "LBFGSB.h"
 #include <iostream>
 
 // [[Rcpp::depends(RcppArmadillo)]]
