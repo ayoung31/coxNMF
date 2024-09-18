@@ -679,15 +679,15 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     double nmfloss = l["nmf_loss"];
     double penloss = l["penalty"];
     
-    Rcout << "loss\n" << loss << "\n";
-    Rcout << "surv loss\n" << survloss << "\n";
-    Rcout << "nmf loss\n" << nmfloss << "\n";
-    Rcout << "penalty\n" << penloss << "\n";
-    
-    Rcout << "W\n" << W.rows(0,4) << "\n";
-    Rcout << "H\n" << H.cols(0,4) << "\n";
-    Rcout << "beta\n" << beta << "\n";
-    Rcout << "lp\n" << lptemp.rows(0,4) << "\n";
+    // Rcout << "loss\n" << loss << "\n";
+    // Rcout << "surv loss\n" << survloss << "\n";
+    // Rcout << "nmf loss\n" << nmfloss << "\n";
+    // Rcout << "penalty\n" << penloss << "\n";
+    // 
+    // Rcout << "W\n" << W.rows(0,4) << "\n";
+    // Rcout << "H\n" << H.cols(0,4) << "\n";
+    // Rcout << "beta\n" << beta << "\n";
+    // Rcout << "lp\n" << lptemp.rows(0,4) << "\n";
 
     eps = std::abs(loss - loss_prev)/loss_prev;
 
