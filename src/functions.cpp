@@ -116,7 +116,7 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, c
                    const arma::vec& delta, double lambda, double eta, bool WtX) {
   
   
-  double nmf_loss = arma::accu(arma::square(M % (X - W * H))) / arma::accu(M);
+  double nmf_loss = arma::accu(arma::square(M % (X - W * H)));// / arma::accu(M);
   double surv_loss = calc_surv_loss(X, M, W, H, beta, y, delta, WtX);
   double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + eta * arma::accu(arma::abs(beta)));
   double loss = nmf_loss - alpha * (surv_loss - penalty);
@@ -179,7 +179,7 @@ public:
     arma::rowvec delta_t = delta.t();
     arma::mat l = arma::kron(delta.t() - (delta.t() * temp),beta);
     // compute gradient in matrix form
-    arma::mat nmf = W.t() * (M % (W*H - X)) * (2.0/s);
+    arma::mat nmf = W.t() * (M % (W*H - X)) * 2.0; //* (2.0 / s);
     arma::mat like = alpha * 2 * l / N;
     arma::mat gradient = nmf - like;
     // convert to armadillo vector
@@ -192,7 +192,7 @@ public:
     // Rcout << "nmf:\n" << nmf.submat(0,0,5-1,0) << "\n";
     // Rcout << "like:\n" << like.submat(0,0,5-1,0) << "\n";
     // Rcout << "grad:\n" << gradient.submat(0,0,5-1,0) << "\n";
-    // Rcout << "s:\n" << s << "\n";
+    //Rcout << "s:\n" << s << "\n";
     
     //COMPUTE FUNCTION VALUE
     List loss = calc_loss_cpp(X,M,W,H,beta,alpha,y,delta,lambda,eta,WtX);
@@ -634,11 +634,16 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   while(eps > tol && it <= maxit){
     loss_prev = loss;
     update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
+    
     if(WtX){
       beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
     }else{
       beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }
+    
+    // if(alpha>0){
+
+    // }
 
     fun.set_value(W,beta);
     
@@ -661,12 +666,28 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
 
     // standardize
-    standardize(W,H,beta,norm_type,WtX);
+    //standardize(W,H,beta,norm_type,WtX);
+    
+    arma::mat lptemp = H.t() * beta;
     
     
 
     l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
     loss = l["loss"];
+    
+    double survloss = l["surv_loss"];
+    double nmfloss = l["nmf_loss"];
+    double penloss = l["penalty"];
+    
+    Rcout << "loss\n" << loss << "\n";
+    Rcout << "surv loss\n" << survloss << "\n";
+    Rcout << "nmf loss\n" << nmfloss << "\n";
+    Rcout << "penalty\n" << penloss << "\n";
+    
+    Rcout << "W\n" << W.rows(0,4) << "\n";
+    Rcout << "H\n" << H.cols(0,4) << "\n";
+    Rcout << "beta\n" << beta << "\n";
+    Rcout << "lp\n" << lptemp.rows(0,4) << "\n";
 
     eps = std::abs(loss - loss_prev)/loss_prev;
 

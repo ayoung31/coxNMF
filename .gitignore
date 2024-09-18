@@ -5,3 +5,5 @@
 R/test.R
 .rds
 data/
+.o
+.dll
