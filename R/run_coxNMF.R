@@ -11,6 +11,7 @@ run_coxNMF = function(X, y, delta, k, alpha, lambda, eta, H0 = NULL, W0 = NULL,
   
   # Initialize
   if(is.null(H0) | is.null(W0) | is.null(beta0)){
+    print("initializing ...")
     fit0 = init(X, M, y, delta, k, alpha, lambda, eta, WtX, norm_type, 
                 penalty, verbose, tol,...)
     H0 = fit0$H0

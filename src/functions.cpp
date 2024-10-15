@@ -37,9 +37,10 @@ void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
     arma::mat l = arma::kron(delta.t() - (delta.t() * temp),beta);
     
     // H update
-    H = (H / (Wt * (M % (W * H)))) % 
-      arma::clamp((Wt * (M % X)) + (alpha * arma::accu(M) / N) * 
+    H = (H / (Wt * (M % (W * H)))) %
+      arma::clamp((Wt * (M % X)) + (alpha * arma::accu(M) / N) *
       l,0,arma::datum::inf);
+    //H = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
   }
   
   return;
@@ -564,15 +565,8 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
 void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
                  bool WtX){
   
-  arma::rowvec col_max = max(W, 0);
-  W.each_row() /= col_max;
-  H.each_col() %= col_max.t();
-  
-  if(WtX){
-    beta %= col_max.t();
-  }else{
-    beta /= col_max.t();
-  }
+  arma::rowvec col_sum = sum(W, 0);
+  W.each_row() /= col_sum;
   
   
     // arma::rowvec col_sums = sum(W, 0);
@@ -633,7 +627,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   
   while(eps > tol && it <= maxit){
     loss_prev = loss;
-    update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
+    
+    update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
     
     if(WtX){
       beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
@@ -641,34 +636,45 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
       beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }
     
+
+    //Rcout << "test 1" << "\n";
+    update_W_cpp(X,M,H,W,beta,y,delta,alpha,WtX,norm_type);
+    //Rcout << "test 2" << "\n";
+    
+
+    
+    
+    
     // if(alpha>0){
 
     // }
 
-    fun.set_value(W,beta);
-    
-    //update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
-    // convert H to arma::vec
-    xarma = arma::vectorise(H);
-    // convert to standard vector
-    xstd = arma::conv_to < std::vector<double> >::from(xarma);
-    // convert to eigen vectorXd
-    x = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(xstd.data(), xstd.size());
-    
-    int niter = solver.minimize(fun, x, fx, lb, ub);
-    //now convert x back to H
-    //convert eigen vector x to std vector
-    xstd2.assign(x.data(), x.data() + x.size());
-    // //convert std vector to arma vector
-    xarma2 = arma::conv_to< arma::colvec >::from(xstd2);
-    // //create H by stacking arma vector into columns
-    H = arma::reshape(xarma2,k,N);
+    // fun.set_value(W,beta);
+    // 
+    // //update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
+    // // convert H to arma::vec
+    // xarma = arma::vectorise(H);
+    // // convert to standard vector
+    // xstd = arma::conv_to < std::vector<double> >::from(xarma);
+    // // convert to eigen vectorXd
+    // x = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(xstd.data(), xstd.size());
+    // 
+    // int niter = solver.minimize(fun, x, fx, lb, ub);
+    // //now convert x back to H
+    // //convert eigen vector x to std vector
+    // xstd2.assign(x.data(), x.data() + x.size());
+    // // //convert std vector to arma vector
+    // xarma2 = arma::conv_to< arma::colvec >::from(xstd2);
+    // // //create H by stacking arma vector into columns
+    // H = arma::reshape(xarma2,k,N);
+    // 
+    // 
+    // // standardize
+    standardize(W,H,beta,norm_type,WtX);
     
 
-    // standardize
-    //standardize(W,H,beta,norm_type,WtX);
-    
-    arma::mat lptemp = H.t() * beta;
+    // 
+    // arma::mat lptemp = H.t() * beta;
     
     
 
