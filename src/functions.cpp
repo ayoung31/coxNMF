@@ -723,7 +723,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     loss_prev = loss;
     
     update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type);
-    Rcout << "W:\n" << W.rows(0,4) << "\n";
+    //Rcout << "W:\n" << W.rows(0,4) << "\n";
     
     
     if(WtX){
@@ -731,11 +731,11 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     }else{
       beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }
-    Rcout << "beta:\n" << beta << "\n";
+    //Rcout << "beta:\n" << beta << "\n";
 
     //Rcout << "test 1" << "\n";
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
-    Rcout << "H:\n" << H.cols(0,4) << "\n";
+    //Rcout << "H:\n" << H.cols(0,4) << "\n";
     
     // if(alpha>0){
 
@@ -763,7 +763,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // 
     // // standardize
     standardize(W,H,beta,norm_type,WtX);
-    Rcout << "Wstd:\n" << W.rows(0,4) << "\n";
+    //Rcout << "Wstd:\n" << W.rows(0,4) << "\n";
     // 
     // arma::mat lptemp = H.t() * beta;
     
@@ -771,12 +771,12 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
 
     l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
     loss = l["loss"];
-    Rcout << "loss: " << loss << "\n";
+    //Rcout << "loss: " << loss << "\n";
     
     double survloss = l["surv_loss"];
-    Rcout << "surv loss: " << survloss << "\n";
+    //Rcout << "surv loss: " << survloss << "\n";
     double nmfloss = l["nmf_loss"];
-    Rcout << "nmf loss: " << nmfloss << "\n";
+    //Rcout << "nmf loss: " << nmfloss << "\n";
     double penloss = l["penalty"];
     
     // Rcout << "loss\n" << loss << "\n";
