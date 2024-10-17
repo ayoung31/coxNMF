@@ -31,12 +31,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // update_W_cpp
-void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H, arma::mat& W, const arma::colvec& beta, const arma::colvec& y, const arma::colvec& delta, double alpha, bool WtX, int norm_type);
-RcppExport SEXP _coxNMF_update_W_cpp(SEXP XSEXP, SEXP MSEXP, SEXP HSEXP, SEXP WSEXP, SEXP betaSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP alphaSEXP, SEXP WtXSEXP, SEXP norm_typeSEXP) {
+void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M, const arma::mat& Mt, const arma::mat& H, arma::mat& W, const arma::colvec& beta, const arma::colvec& y, const arma::colvec& delta, double alpha, bool WtX, int norm_type);
+RcppExport SEXP _coxNMF_update_W_cpp(SEXP XSEXP, SEXP XtSEXP, SEXP MSEXP, SEXP MtSEXP, SEXP HSEXP, SEXP WSEXP, SEXP betaSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP alphaSEXP, SEXP WtXSEXP, SEXP norm_typeSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Xt(XtSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type M(MSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Mt(MtSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type H(HSEXP);
     Rcpp::traits::input_parameter< arma::mat& >::type W(WSEXP);
     Rcpp::traits::input_parameter< const arma::colvec& >::type beta(betaSEXP);
@@ -45,7 +47,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< bool >::type WtX(WtXSEXP);
     Rcpp::traits::input_parameter< int >::type norm_type(norm_typeSEXP);
-    update_W_cpp(X, M, H, W, beta, y, delta, alpha, WtX, norm_type);
+    update_W_cpp(X, Xt, M, Mt, H, W, beta, y, delta, alpha, WtX, norm_type);
     return R_NilValue;
 END_RCPP
 }
@@ -205,7 +207,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_coxNMF_update_H_cpp", (DL_FUNC) &_coxNMF_update_H_cpp, 9},
-    {"_coxNMF_update_W_cpp", (DL_FUNC) &_coxNMF_update_W_cpp, 10},
+    {"_coxNMF_update_W_cpp", (DL_FUNC) &_coxNMF_update_W_cpp, 12},
     {"_coxNMF_calc_surv_loss", (DL_FUNC) &_coxNMF_calc_surv_loss, 8},
     {"_coxNMF_calc_loss_cpp", (DL_FUNC) &_coxNMF_calc_loss_cpp, 11},
     {"_coxNMF_cdfit_cox_dh", (DL_FUNC) &_coxNMF_cdfit_cox_dh, 12},

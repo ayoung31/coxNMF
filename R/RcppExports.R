@@ -5,8 +5,8 @@ update_H_cpp <- function(X, M, W, beta, H, y, delta, alpha, WtX) {
     invisible(.Call(`_coxNMF_update_H_cpp`, X, M, W, beta, H, y, delta, alpha, WtX))
 }
 
-update_W_cpp <- function(X, M, H, W, beta, y, delta, alpha, WtX, norm_type) {
-    invisible(.Call(`_coxNMF_update_W_cpp`, X, M, H, W, beta, y, delta, alpha, WtX, norm_type))
+update_W_cpp <- function(X, Xt, M, Mt, H, W, beta, y, delta, alpha, WtX, norm_type) {
+    invisible(.Call(`_coxNMF_update_W_cpp`, X, Xt, M, Mt, H, W, beta, y, delta, alpha, WtX, norm_type))
 }
 
 #' @export

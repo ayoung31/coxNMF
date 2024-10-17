@@ -26,9 +26,13 @@ beta0 = rep(0,k)#runif(k,-.000001,.000001)
 init = nmfModel(k,X,W=W0,H=H0)
 fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
 
-fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=.1,lambda=.1,eta=.1,H0=H0,W0=W0,beta0=beta0,tol=1e-8,maxit=1999,verbose=TRUE)
+fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=5,lambda=0,eta=0,H0=H0,
+                     W0=W0,beta0=beta0,tol=1e-8,maxit=1999,verbose=TRUE,WtX=TRUE)
 
-cvwrapr::getCindex(t(fit_cox$H)%*%fit_cox$beta,survival::Surv(y,delta))
+ra = recommend_alpha(X,M,y,delta,k,10,WtX=TRUE,norm.type = 2)
+
+cvwrapr::getCindex(t(X)%*%fit_std@fit@W%*%fit_cox$beta,survival::Surv(y,delta))
+cvwrapr::getCindex(t(X)%*%fit_cox$W%*%fit_cox$beta,survival::Surv(y,delta))
 
 pheatmap(cor(t(rbind(fit_std@fit@H,fit_cox$H))),cluster_rows = FALSE,cluster_cols = FALSE)
 pheatmap(cor(cbind(fit_std@fit@W,fit_cox$W)))
@@ -47,7 +51,7 @@ i=3
 names(top_genes)[i]
 print(paste(colors,names(top_genes[[i]]),sep='='))     
 
-apply(fit_cox$H,1,sd)*fit_cox$beta
+#apply(fit_cox$H,1,sd)*fit_cox$beta
 
 W <- fit_std@fit@W
 
