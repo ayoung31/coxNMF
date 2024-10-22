@@ -18,18 +18,18 @@ p=nrow(X)
 
 
 #initialize parameters
-set.seed(k)
+set.seed(24)
 H0 = matrix(runif(n*k,0,max(X)),nrow=k)
 W0 = matrix(runif(p*k,0,max(X)),nrow=p)
 beta0 = rep(0,k)#runif(k,-.000001,.000001)
-
+#H0 = sweep(H0,2,colSums(H0),'/')
 init = nmfModel(k,X,W=W0,H=H0)
 fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
 
-fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=5,lambda=0,eta=0,H0=H0,
-                     W0=W0,beta0=beta0,tol=1e-8,maxit=1999,verbose=TRUE,WtX=TRUE)
+fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=10,lambda=0,eta=0,H0=H0,
+                     W0=W0,beta0=beta0,tol=1e-6,maxit=4000,verbose=TRUE,WtX=TRUE)
 
-ra = recommend_alpha(X,M,y,delta,k,10,WtX=TRUE,norm.type = 2)
+#ra = recommend_alpha(X,M,y,delta,k,10,WtX=TRUE,norm.type = 2)
 
 cvwrapr::getCindex(t(X)%*%fit_std@fit@W%*%fit_cox$beta,survival::Surv(y,delta))
 cvwrapr::getCindex(t(X)%*%fit_cox$W%*%fit_cox$beta,survival::Surv(y,delta))
@@ -51,9 +51,9 @@ i=3
 names(top_genes)[i]
 print(paste(colors,names(top_genes[[i]]),sep='='))     
 
-#apply(fit_cox$H,1,sd)*fit_cox$beta
+apply(t(fit_cox$W)%*%X,1,sd)*fit_cox$beta
 
-W <- fit_std@fit@W
+W <- fit_cox$W
 
 rownames(W) = rownames(X)
 tops <- get_top_genes(W,ngene=25)
