@@ -148,8 +148,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // update_beta_cpp
-arma::uvec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty, double alpha, double lambda, arma::vec& beta);
-RcppExport SEXP _coxNMF_update_beta_cpp(SEXP XSEXP, SEXP ySEXP, SEXP penaltySEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP betaSEXP) {
+arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty, double alpha, double lambda, arma::vec beta0);
+RcppExport SEXP _coxNMF_update_beta_cpp(SEXP XSEXP, SEXP ySEXP, SEXP penaltySEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP beta0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -158,8 +158,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< String >::type penalty(penaltySEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(update_beta_cpp(X, y, penalty, alpha, lambda, beta));
+    Rcpp::traits::input_parameter< arma::vec >::type beta0(beta0SEXP);
+    rcpp_result_gen = Rcpp::wrap(update_beta_cpp(X, y, penalty, alpha, lambda, beta0));
     return rcpp_result_gen;
 END_RCPP
 }

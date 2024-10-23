@@ -30,8 +30,8 @@ cdfit_cox_dh_one_lambda_it <- function(X, d, penalty, lambda, a, m, alpha) {
     .Call(`_coxNMF_cdfit_cox_dh_one_lambda_it`, X, d, penalty, lambda, a, m, alpha)
 }
 
-update_beta_cpp <- function(X, y, penalty, alpha, lambda, beta) {
-    .Call(`_coxNMF_update_beta_cpp`, X, y, penalty, alpha, lambda, beta)
+update_beta_cpp <- function(X, y, penalty, alpha, lambda, beta0) {
+    .Call(`_coxNMF_update_beta_cpp`, X, y, penalty, alpha, lambda, beta0)
 }
 
 #' @export

@@ -612,8 +612,8 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d, Str
 
 
 // [[Rcpp::export]]
-arma::uvec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty,
-                          double alpha, double lambda, arma::vec& beta){
+arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty,
+                          double alpha, double lambda, arma::vec beta0){
 
 
   // Order y by time
@@ -628,24 +628,21 @@ arma::uvec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalt
   XX.each_row() /= sdX;
   arma::uvec ns = arma::find(sdX > .000001);
   XX = XX.cols(ns);
-  sdX = sdX.cols(ns);
-  beta = beta.elem(ns);
   int p = XX.n_cols;
 
   arma::vec penalty_factor = arma::ones<arma::vec>(p);
   penalty_factor = penalty_factor.elem(ns);
-
+  
   // perform coordinate descent
   arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, penalty, lambda,
-                                           beta, penalty_factor, alpha);
+                                           beta0, penalty_factor, alpha);
 
   // Unstandardize coefficients
-  //arma::vec beta = arma::zeros<arma::vec>(XX.n_cols);
-  beta = b / sdX.t();
-  //beta.elem(ns) = bb;
+  arma::vec beta = arma::zeros<arma::vec>(X.n_cols);
+  arma::vec bb = b / sdX.t();
+  beta.elem(ns) = bb;
 
-
-  return ns;
+  return beta;
 }
 
 //' @export
@@ -721,28 +718,24 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   // VectorXd x;
   // std::vector<double> xstd2;
   // arma::vec xarma2;
-  arma::uvec ns;
   
   while(eps > tol && it <= maxit){
     loss_prev = loss;
     
     update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type);
-    //Rcout << "W:\n" << W.rows(0,4) << "\n";
+    Rcout << "W:\n" << W.rows(0,4) << "\n";
     
     
     if(WtX){
-      ns = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
+      beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
     }else{
-      ns = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
+      beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }
-    H = H.rows(ns);
-    W = W.cols(ns);
-    
-    //Rcout << "beta:\n" << beta << "\n";
+    Rcout << "beta:\n" << beta << "\n";
 
     //Rcout << "test 1" << "\n";
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
-    //Rcout << "H:\n" << H.cols(0,4) << "\n";
+    Rcout << "H:\n" << H.cols(0,4) << "\n";
     
     // if(alpha>0){
 
@@ -770,8 +763,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // 
     // // standardize
     standardize(W,H,beta,norm_type,WtX);
-    //Rcout << "Hstd:\n" << H.cols(0,4) << "\n";
-    //Rcout << "Wstd:\n" << W.rows(0,4) << "\n";
+    Rcout << "Hstd:\n" << H.cols(0,4) << "\n";
     // 
     // arma::mat lptemp = H.t() * beta;
     
@@ -779,12 +771,12 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
 
     l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
     loss = l["loss"];
-    //Rcout << "loss: " << loss << "\n";
+    Rcout << "loss: " << loss << "\n";
     
     double survloss = l["surv_loss"];
-    //Rcout << "surv loss: " << survloss << "\n";
+    Rcout << "surv loss: " << survloss << "\n";
     double nmfloss = l["nmf_loss"];
-    //Rcout << "nmf loss: " << nmfloss << "\n";
+    Rcout << "nmf loss: " << nmfloss << "\n";
     double penloss = l["penalty"];
     
     // Rcout << "loss\n" << loss << "\n";
