@@ -8,7 +8,7 @@ k=10
 tcga = readRDS('data/TCGA_PAAD_gencode_filtered.rds')
 
 X=as.matrix(tcga$ex)
-X = sqrt(X)
+#X = sqrt(X)
 y=tcga$sampInfo$Follow.up.days
 delta=-1*(as.numeric(tcga$sampInfo$Censored.1yes.0no)-2)
 
@@ -19,7 +19,7 @@ p=nrow(X)
 
 
 #initialize parameters
-set.seed(20)
+set.seed(22)
 H0 = matrix(runif(n*k,0,max(X)),nrow=k)
 W0 = matrix(runif(p*k,0,max(X)),nrow=p)
 beta0 = rep(0,k)#runif(k,-.000001,.000001)
@@ -27,7 +27,7 @@ beta0 = rep(0,k)#runif(k,-.000001,.000001)
 init = nmfModel(k,X,W=W0,H=H0)
 fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
 
-fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=8,lambda=0,eta=0,H0=H0,
+fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=4,lambda=0,eta=0,H0=H0,
                      W0=W0,beta0=beta0,tol=1e-8,maxit=4000,verbose=TRUE,WtX=TRUE)
 
 #ra = recommend_alpha(X,M,y,delta,k,10,WtX=TRUE,norm.type = 2)
