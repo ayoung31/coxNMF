@@ -15,10 +15,10 @@ using Eigen::VectorXd;
 void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
                        const arma::colvec& beta, arma::mat& H, 
                        const arma::colvec& y, const arma::colvec& delta, 
-                       double alpha, bool WtX) {
+                       double alpha, bool WtX, const arma::uvec& ns) {
   arma::mat Wt = W.t();
   if(WtX){
-    H = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
+    H.rows(ns) = H.rows(ns) % (Wt.rows(ns) * (M % X)) / (Wt.rows(ns) * (M % (W * H)));
   }else{
     int N = H.n_cols;
     
@@ -37,7 +37,7 @@ void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
     arma::mat l = arma::kron(delta.t() - (delta.t() * temp),beta);
     
     // H update
-    H = (H / (Wt * (M % (W * H)))) %
+    H = (H / (Wt * (M % (W * H))) ) %
       arma::clamp((Wt * (M % X)) + (alpha * arma::accu(M) / N) *
       l,0,arma::datum::inf);
     //H = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
@@ -47,17 +47,41 @@ void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
 }
 
 // [[Rcpp::export]]
-void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M, 
+void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
                   const arma::mat& Mt, const arma::mat& H,
-                       arma::mat& W, const arma::colvec& beta, 
-                       const arma::colvec& y, const arma::colvec& delta, 
-                       double alpha, bool WtX, int norm_type) {
+                  arma::mat& W, const arma::colvec& beta,
+                  const arma::colvec& y, const arma::colvec& delta,
+                  double alpha, bool WtX, int norm_type, const arma::uvec& ns,
+                  double step) {
   if(!WtX){
     W = W % ((M % X) * H.t()) / ((M % (W * H)) * H.t());
   }else{
     int N = X.n_cols;
     int P = X.n_rows;
-    int s = arma::accu(M);
+    //int s = arma::accu(M);
+// 
+//     // linear predictor
+//     arma::vec lp = exp((Mt % Xt) * W * beta);
+// 
+//     // Indicator matrix
+//     arma::mat y_matrix = arma::repmat(y, 1, N);
+//     arma::mat Y = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
+//     arma::mat oneNP = arma::ones(N,P);
+// 
+//     // derivative of log likelihood
+//     arma::mat LP = diagmat(lp);
+//     arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
+//     arma::mat Ht = H.t();
+//     // arma::mat temp1 = (M % X) * Ht;
+//     // arma::mat temp2 = (alpha * s / N) * l;
+//     // arma::mat temp3 = temp1 + temp2;
+//     // Rcout << temp1.rows(0,10) << "\n\n";
+//     // Rcout << temp2.rows(0,10) << "\n\n";
+//     // Rcout << temp3.rows(0,10) << "\n\n";
+//     W.cols(ns) = (W.cols(ns) / (((M % (W*H)) * Ht.cols(ns))) ) %
+//       arma::clamp(((M % X) * Ht.cols(ns)) + (alpha / N) * trans(l.rows(ns)),0,arma::datum::inf);
+//       //arma::clamp(W % ((M % X) * Ht + (alpha * s / N) * trans(l)) / ((M % (W*H)) * Ht), 1e-10, arma::datum::inf);
+
 
     // linear predictor
     arma::vec lp = exp((Mt % Xt) * W * beta);
@@ -70,19 +94,17 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
     // derivative of log likelihood
     arma::mat LP = diagmat(lp);
     arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
-    arma::mat Ht = H.t();
-    // arma::mat temp1 = (M % X) * Ht;
-    // arma::mat temp2 = (alpha * s / N) * l;
-    // arma::mat temp3 = temp1 + temp2;
-    // Rcout << temp1.rows(0,10) << "\n\n";
-    // Rcout << temp2.rows(0,10) << "\n\n";
-    // Rcout << temp3.rows(0,10) << "\n\n";
-    W = (W / ((M % (W*H)) * Ht)) %
-      arma::clamp(((M % X) * Ht) + (alpha * s / N) * trans(l),0,arma::datum::inf);
-      //arma::clamp(W % ((M % X) * Ht + (alpha * s / N) * trans(l)) / ((M % (W*H)) * Ht), 1e-10, arma::datum::inf);
+
+    // compute gradient in matrix form
+    arma::mat nmf = (M % (W*H - X)) * H.t() * 2.0; //* (2.0 / s);
+    arma::mat like = alpha * 2 * l.t() / N;
+    //Rcout << "test1\n";
+    arma::mat gradient = nmf - like;
+
+    W = W % arma::exp(-1 * step * gradient);
   }
-  
-  
+
+
   // if(norm_type == 1){
   //   arma::colvec row_sums = sum(W, 1);
   //   W.each_col() /= row_sums;
@@ -90,24 +112,28 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
   //   arma::rowvec col_sums = sum(W, 0);
   //   W.each_row() /= col_sums;
   // }
-  
+
   return;
 }
 
 //' @export
 // [[Rcpp::export]]
-double calc_surv_loss(const arma::mat& X, const arma::mat& M, const arma::mat& W,
-                      const arma::mat& H, const arma::vec& beta, const arma::vec& y,
+double calc_surv_loss(const arma::mat& X, const arma::mat& M, 
+                      const arma::mat& Wt,
+                      const arma::vec& beta, const arma::vec& y,
                       const arma::vec& delta, bool WtX){
-  int N = H.n_cols;
+  int N = X.n_cols;
   arma::colvec lp;
   
   if(!WtX){
-    lp = H.t() * beta;
+    //lp = H.t() * beta;
   }else{
-    lp = trans(M % X) * W * beta;
+    lp = trans(trans(beta) * Wt * (M % X));
   }
-  
+  Rcout << "lp:\n" << lp << "\n";
+  //Rcout << "W:\n" << W.rows(0,5) << "\n";
+  //Rcout << "XtW:\n" << trans(M % X) * W << "\n";
+  //Rcout << "beta:\n" << beta << "\n";
   arma::mat y_matrix = arma::repmat(y, 1, N);
   arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
   
@@ -116,14 +142,16 @@ double calc_surv_loss(const arma::mat& X, const arma::mat& M, const arma::mat& W
 }
 
 // [[Rcpp::export]]
-List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::mat& H,
+List calc_loss_cpp(const arma::mat& Xt, const arma::mat& X, 
+                   const arma::mat& Mt, const arma::mat& M, 
+                   const arma::mat& Wt, const arma::mat& Ht, const arma::mat& H,
                    const arma::vec& beta, double alpha, const arma::vec& y, 
                    const arma::vec& delta, double lambda, double eta, bool WtX) {
   
   
-  double nmf_loss = arma::accu(arma::square(M % (X - W * H)));// / arma::accu(M);
-  double surv_loss = calc_surv_loss(X, M, W, H, beta, y, delta, WtX);
-  double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + eta * arma::accu(arma::abs(beta)));
+  double nmf_loss = arma::accu(arma::square(Mt % (Xt - Ht * Wt)));// / arma::accu(M);
+  double surv_loss = calc_surv_loss(X, M, Wt, beta, y, delta, WtX);
+  double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2.0 + eta * arma::accu(arma::abs(beta)));
   double loss = nmf_loss - alpha * (surv_loss - penalty);
   
   return List::create(
@@ -222,6 +250,7 @@ private:
   const arma::vec& y;
   const arma::vec& delta;
   arma::mat& H;
+  arma::mat& Ht;
   arma::vec& beta;
   double alpha;
   double lambda;
@@ -229,22 +258,24 @@ private:
   bool WtX;
 public:
 
-  Wupdate(const arma::mat& Mt_, const arma::mat& Xt_, const arma::mat& M_, 
-          const arma::mat& X_,const arma::vec& y_,
-          const arma::vec& delta_, arma::mat& H_,
+  Wupdate(const arma::mat& Mt_, const arma::mat& M_, 
+          const arma::mat& Xt_, const arma::mat& X_,
+          const arma::vec& y_,
+          const arma::vec& delta_, arma::mat& Ht_,
+          arma::mat& H_,
           arma::vec& beta_, double alpha_, double lambda_,
-          double eta_, bool WtX_) : Mt(Mt_), Xt(Xt_), M(M_), X(X_), y(y_), 
-          delta(delta_), H(H_), beta(beta_),
+          double eta_, bool WtX_) : Mt(Mt_), M(M_), Xt(Xt_), X(X_), y(y_), 
+          delta(delta_), Ht(Ht_), H(H_), beta(beta_),
           alpha(alpha_), lambda(lambda_), eta(eta_), WtX(WtX_) {}
   double operator()(const VectorXd& x, VectorXd& grad)
   {
     double fx = 0.0;
 
 
-    int s = arma::accu(M);
-    int k = H.n_rows;
-    int p = X.n_rows;
-    int n = X.n_cols;
+    int s = arma::accu(Mt);
+    int k = Ht.n_cols;
+    int p = Xt.n_cols;
+    int n = Xt.n_rows;
 
     //create H from x
     //convert eigen vector x to std vector
@@ -252,11 +283,11 @@ public:
     //convert std vector to arma vector
     arma::vec xarma = arma::conv_to< arma::colvec >::from(xstd);
     //create W by stacking arma vector into columns
-    arma::mat W = arma::reshape(xarma,p,k);
+    arma::mat Wt = arma::reshape(xarma,k,p);
 
     // COMPUTE GRADIENT
     // linear predictor
-    arma::vec lp = exp((Mt % Xt) * W * beta);
+    arma::vec lp = trans(exp(trans(beta) * Wt * (M % X)));
 
     // Indicator matrix
     arma::mat y_matrix = arma::repmat(y, 1, n);
@@ -268,8 +299,8 @@ public:
     arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
 
     // compute gradient in matrix form
-    arma::mat nmf = (M % (W*H - X)) * H.t() * 2.0; //* (2.0 / s);
-    arma::mat like = alpha * 2 * trans(l) / n;
+    arma::mat nmf = H * (Mt % (Ht*Wt - Xt)) * 2.0; //* (2.0 / s);
+    arma::mat like = alpha * 2 * l / n;
     //Rcout << "test1\n";
     arma::mat gradient = nmf - like;
     //Rcout << "test2\n";
@@ -287,14 +318,15 @@ public:
     //Rcout << "s:\n" << s << "\n";
 
     //COMPUTE FUNCTION VALUE
-    List loss = calc_loss_cpp(X,M,W,H,beta,alpha,y,delta,lambda,eta,WtX);
+    List loss = calc_loss_cpp(Xt,X,Mt,M,Wt,Ht,H,beta,alpha,y,delta,lambda,eta,WtX);
     fx = loss["loss"];
     return fx;
   }
 
-  void set_value(arma::mat& H_, arma::mat& beta_){
+  void set_value(arma::mat& beta_, arma::mat& H_){
     beta=beta_;
     H=H_;
+    Ht=trans(H);
   }
 };
 
@@ -619,7 +651,7 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d, Str
 
 // [[Rcpp::export]]
 arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty,
-                          double alpha, double lambda, arma::vec beta0){
+                          double alpha, double lambda, const arma::vec& beta0){
 
 
   // Order y by time
@@ -630,43 +662,48 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
   // Standardize X
   arma::rowvec meanX = arma::mean(XX, 0);
   arma::rowvec sdX = arma::stddev(XX, 1, 0); // using unbiased estimator
+  arma::uvec ns = arma::find(sdX > .000001);
+  XX = XX.cols(ns);
+  meanX = arma::mean(XX, 0);
+  sdX = arma::stddev(XX, 1, 0); 
   //Rcout << sdX << "\n";
   XX.each_row() -= meanX;
   XX.each_row() /= sdX;
-  Rcout << XX.rows(0,4) << "\n";
-  arma::uvec ns = arma::find(sdX > .000001);
-  XX = XX.cols(ns);
+  //Rcout << XX.rows(0,4) << "\n";
+
   int p = XX.n_cols;
 
   arma::vec penalty_factor = arma::ones<arma::vec>(p);
-  penalty_factor = penalty_factor.elem(ns);
-  
+  //Rcout << "test1\n";
   // perform coordinate descent
   arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, penalty, lambda,
-                                           beta0, penalty_factor, alpha);
-
+                                           beta0.elem(ns), penalty_factor, alpha);
+  //Rcout << "test2\n";
   // Unstandardize coefficients
-  arma::vec beta = arma::zeros<arma::vec>(X.n_cols);
+  arma::mat beta = arma::zeros<arma::vec>(X.n_cols);
   arma::vec bb = b / sdX.t();
   beta.elem(ns) = bb;
-
+  //Rcout << "test3\n";
   return beta;
 }
 
 //' @export
 // [[Rcpp::export]]
 void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
-                 bool WtX){
+                 bool WtX, arma::uvec ns){
   
   
-  
-  if(WtX){
-    arma::rowvec col_sum = sum(H, 0);
-    H.each_row() /= col_sum;
-  }else{
-    arma::rowvec col_sum = sum(W, 0);
-    W.each_row() /= col_sum;
-  }
+  // if(WtX){
+  //   arma::mat HH = H.rows(ns);
+  //   arma::rowvec col_sum = sum(HH, 0);
+  //   HH.each_row() /= col_sum;
+  //   H.rows(ns) = HH;
+  // }else{
+    arma::mat WW = W.cols(ns);
+    arma::rowvec col_sum = sum(WW, 0);
+    WW.each_row() /= col_sum;
+    W.cols(ns) = WW;
+  // }
   
   
     // arma::rowvec col_sums = sum(W, 0);
@@ -689,33 +726,42 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             const arma::colvec& delta, double alpha,
                             double lambda, double eta, double tol,
                             int maxit, bool verbose, bool WtX, int norm_type,
-                            String penalty, bool init){
+                            String penalty, bool init, double step){
   arma::mat H = H0;
+  arma::mat Ht = trans(H);
   arma::mat W = W0;
   arma::mat Xt = trans(X);
   arma::mat Mt = trans(M);
+  arma::mat Wt = trans(W);
   
   arma::colvec beta = beta0;
+  
+  
   
   int N = H.n_cols;
   int P = X.n_rows;
   int k = H.n_rows;
   
+  arma::uvec ns = arma::conv_to<arma::uvec>::from(arma::linspace(0,k-1,k));
+  
   double loss = 0.000001;
   double eps = 1;
-  int it = 0;
+  int it = 1;
   double loss_prev;
+  List b;
   List l;
   arma::mat s = arma::join_horiz(y,delta);
+  arma::mat XtW;
   
   LBFGSpp::LBFGSBParam<double> param;
-  param.epsilon = 1e-6;
-  param.max_iterations = 100;
+  // param.epsilon = 1e-5;
+  // param.max_iterations = 100;
+  // param.min_step = 1e-30;
   double fx;
   // Create solver and function object
   LBFGSpp::LBFGSBSolver<double> solver(param);
   // Declare function object Hupdate
-  Wupdate fun(Mt,Xt,M,X,y,delta,H,beta,alpha,lambda,eta,WtX);
+  Wupdate fun(Mt,M,Xt,X,y,delta,Ht,H,beta,alpha,lambda,eta,WtX);
 
   // bounds for constrained optimization
   VectorXd lb = VectorXd::Constant(P*k, 0.0);
@@ -727,44 +773,82 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   VectorXd x;
   std::vector<double> xstd2;
   arma::vec xarma2;
+  arma::vec lossit = arma::zeros<arma::vec>(2000);
   
   while(eps > tol && it <= maxit){
     loss_prev = loss;// fun.set_value(W,beta);
-
-    // fun.set_value(H,beta);
-    // 
-    // // convert H to arma::vec
-    // xarma = arma::vectorise(W);
-    // // convert to standard vector
-    // xstd = arma::conv_to < std::vector<double> >::from(xarma);
-    // // convert to eigen vectorXd
-    // x = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(xstd.data(), xstd.size());
-    // 
-    // int niter = solver.minimize(fun, x, fx, lb, ub);
-    // //now convert x back to H
-    // //convert eigen vector x to std vector
-    // xstd2.assign(x.data(), x.data() + x.size());
-    // // //convert std vector to arma vector
-    // xarma2 = arma::conv_to< arma::colvec >::from(xstd2);
-    // // //create H by stacking arma vector into columns
-    // W = arma::reshape(xarma2,P,k);
-
     
     
-    update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type);
-    //Rcout << "W:\n" << W.rows(0,4) << "\n";
+    update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX,ns);
     
+    XtW = trans(M % X) * W;
     
     if(WtX){
-      beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
+      beta = update_beta_cpp(XtW, s, penalty,eta,lambda,beta);
     }else{
-      beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
+      //beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }
-    //Rcout << "beta:\n" << beta << "\n";
+    Rcout << "beta:\n" << beta << "\n";
+    
+    update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step);
+    
+// 
+//     fun.set_value(beta,H);
+// 
+//     // convert H to arma::vec
+//     xarma = arma::vectorise(Wt);
+//     // convert to standard vector
+//     xstd = arma::conv_to < std::vector<double> >::from(xarma);
+//     // convert to eigen vectorXd
+//     x = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(xstd.data(), xstd.size());
+// 
+//     int niter = solver.minimize(fun, x, fx, lb, ub);
+//     //now convert x back to H
+//     //convert eigen vector x to std vector
+//     xstd2.assign(x.data(), x.data() + x.size());
+//     // //convert std vector to arma vector
+//     xarma2 = arma::conv_to< arma::colvec >::from(xstd2);
+//     // //create H by stacking arma vector into columns
+//     Wt = arma::reshape(xarma2,k,P);
+// 
+//     W = trans(Wt);
+
+    // if(it==93){
+    //   Rcout << "H:\n" << H << "\n";
+    // }
+    // if(it==93){
+    //   arma::mat WH = W * H;
+    //   Rcout << "WH3314nan\n" << WH.submat(3314,0,3314,0) << "\n";
+    // }
+    // if(it==93){
+    //   Rcout << "W3314\n" << W.rows(3314,3314) << "\n";
+    // }
+    //update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns);
+    // 
+    //Rcout << "Xt:\n" << Xt.cols(0,15) << "\n";
+    //find the active set
+    
+    // Rcout << "XtW:\n" << XtW.rows(0,6) << "\n";
+    // arma::rowvec sdX = arma::stddev(XtW, 1, 0); // using unbiased estimator
+    // ns = arma::find(sdX > .000001);
+    // Rcout << "sdX\n" << sdX << "\n";
+    // Rcout << "ns:\n" << ns << "\n";
+    
+    //
+    Rcout << "Wstd:\n" << W.rows(0,4) << "\n";
+    // if(it==725){
+    //   Rcout << "W:\n" << W.cols(0,0) << "\n";
+    // }
+    
+    //standardize(W,H,beta,norm_type,WtX,ns);
+    
+    
+    
 
     //Rcout << "test 1" << "\n";
-    update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
-    //Rcout << "H:\n" << H.cols(0,4) << "\n";
+   
+    
+    
     
     // if(alpha>0){
 
@@ -791,21 +875,22 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // 
     // 
     // // standardize
-    standardize(W,H,beta,norm_type,WtX);
+    
     //Rcout << "Hstd:\n" << H.cols(0,4) << "\n";
     // 
     // arma::mat lptemp = H.t() * beta;
     
     
 
-    l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
+    l = calc_loss_cpp(Xt, X, Mt, M, W.t(), H.t(), H, beta, alpha, y, delta, lambda, eta, WtX);
     loss = l["loss"];
-    //Rcout << "loss: " << loss << "\n";
+    lossit[it-1] = loss;
+    Rcout << "loss: " << loss << "\n";
     
     double survloss = l["surv_loss"];
-    //Rcout << "surv loss: " << survloss << "\n";
+    Rcout << "surv loss: " << survloss << "\n";
     double nmfloss = l["nmf_loss"];
-    //Rcout << "nmf loss: " << nmfloss << "\n";
+    Rcout << "nmf loss: " << nmfloss << "\n";
     double penloss = l["penalty"];
     
     // Rcout << "loss\n" << loss << "\n";
@@ -820,13 +905,14 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
 
     eps = std::abs(loss - loss_prev)/loss_prev;
 
-    it = it + 1;
+    
     if(verbose){
       Rprintf("iter: %d eps: %.8f loss: %.8f\n",it,eps,loss);
     }
     if(it == maxit && !init){
       warning("coxNMF failed to converge");
     }
+    it = it + 1;
 
   }
 
@@ -835,6 +921,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     Named("H") = H,
     Named("beta") = beta,
     Named("loss") = l,
+    Named("lossit") = lossit,
     Named("iter") = it);
   return L;
 }

@@ -3,7 +3,7 @@ library(dplyr)
 library(NMF)
 library(pheatmap)
 
-k=10
+k=16
 #read pre-filtered data
 tcga = readRDS('data/TCGA_PAAD_gencode_filtered.rds')
 
@@ -27,10 +27,13 @@ beta0 = rep(0,k)#runif(k,-.000001,.000001)
 init = nmfModel(k,X,W=W0,H=H0)
 fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
 
-fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=4,lambda=0,eta=0,H0=H0,
-                     W0=W0,beta0=beta0,tol=1e-8,maxit=4000,verbose=TRUE,WtX=TRUE)
+fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=20e6,lambda=0,eta=0,H0=H0,
+                     W0=W0,beta0=beta0,tol=1e-6,maxit=2000,verbose=TRUE,WtX=TRUE,
+                     step=1e-3)
 
 #ra = recommend_alpha(X,M,y,delta,k,10,WtX=TRUE,norm.type = 2)
+
+fit_surv = survival::coxph(survival::Surv(y,delta)~t(X)%*%fit_std@fit@W)
 
 cvwrapr::getCindex(t(X)%*%fit_std@fit@W%*%fit_cox$beta,survival::Surv(y,delta))
 cvwrapr::getCindex(t(X)%*%fit_cox$W%*%fit_cox$beta,survival::Surv(y,delta))
