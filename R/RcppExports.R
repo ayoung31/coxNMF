@@ -5,8 +5,8 @@ update_H_cpp <- function(X, M, W, beta, H, y, delta, alpha, WtX, ns) {
     invisible(.Call(`_coxNMF_update_H_cpp`, X, M, W, beta, H, y, delta, alpha, WtX, ns))
 }
 
-update_W_cpp <- function(X, Xt, M, Mt, H, W, beta, y, delta, alpha, WtX, norm_type, ns, step) {
-    invisible(.Call(`_coxNMF_update_W_cpp`, X, Xt, M, Mt, H, W, beta, y, delta, alpha, WtX, norm_type, ns, step))
+update_W_cpp <- function(X, Xt, M, Mt, H, W, beta, y, delta, alpha, WtX, norm_type, ns, step, changeprev, mo) {
+    invisible(.Call(`_coxNMF_update_W_cpp`, X, Xt, M, Mt, H, W, beta, y, delta, alpha, WtX, norm_type, ns, step, changeprev, mo))
 }
 
 #' @export
@@ -40,7 +40,7 @@ standardize <- function(W, H, beta, norm_type, WtX, ns) {
 }
 
 #' @export
-optimize_loss_cpp <- function(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step) {
-    .Call(`_coxNMF_optimize_loss_cpp`, X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step)
+optimize_loss_cpp <- function(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo) {
+    .Call(`_coxNMF_optimize_loss_cpp`, X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo)
 }
 

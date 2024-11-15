@@ -52,7 +52,7 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
                   arma::mat& W, const arma::colvec& beta,
                   const arma::colvec& y, const arma::colvec& delta,
                   double alpha, bool WtX, int norm_type, const arma::uvec& ns,
-                  double step) {
+                  double step, arma::mat& changeprev, double mo) {
   if(!WtX){
     W = W % ((M % X) * H.t()) / ((M % (W * H)) * H.t());
   }else{
@@ -100,8 +100,12 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
     arma::mat like = alpha * 2 * l.t() / N;
     //Rcout << "test1\n";
     arma::mat gradient = nmf - like;
+    
+    arma::mat change = step * gradient + mo * changeprev;
 
-    W = W % arma::exp(-1 * step * gradient);
+    W = W % arma::exp(-1 * change);
+    
+    changeprev = change;
   }
 
 
@@ -726,7 +730,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             const arma::colvec& delta, double alpha,
                             double lambda, double eta, double tol,
                             int maxit, bool verbose, bool WtX, int norm_type,
-                            String penalty, bool init, double step){
+                            String penalty, bool init, double step, double mo){
   arma::mat H = H0;
   arma::mat Ht = trans(H);
   arma::mat W = W0;
@@ -752,6 +756,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   List l;
   arma::mat s = arma::join_horiz(y,delta);
   arma::mat XtW;
+  arma::mat changeprev = arma::zeros<arma::mat>(P,k);
   
   LBFGSpp::LBFGSBParam<double> param;
   // param.epsilon = 1e-5;
@@ -790,7 +795,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     }
     Rcout << "beta:\n" << beta << "\n";
     
-    update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step);
+    update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step,changeprev,mo);
     
 // 
 //     fun.set_value(beta,H);

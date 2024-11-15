@@ -1,9 +1,9 @@
-library(coxNMF)
+#library(coxNMF)
 library(dplyr)
 library(NMF)
 library(pheatmap)
 
-k=16
+k=12
 #read pre-filtered data
 tcga = readRDS('data/TCGA_PAAD_gencode_filtered.rds')
 
@@ -27,9 +27,9 @@ beta0 = rep(0,k)#runif(k,-.000001,.000001)
 init = nmfModel(k,X,W=W0,H=H0)
 fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
 
-fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=20e6,lambda=0,eta=0,H0=H0,
-                     W0=W0,beta0=beta0,tol=1e-6,maxit=2000,verbose=TRUE,WtX=TRUE,
-                     step=1e-3)
+fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=10e6,lambda=0,eta=0,H0=H0,
+                     W0=W0,beta0=beta0,tol=1e-6,maxit=1000,verbose=TRUE,WtX=TRUE,
+                     step=1e-2,mo=.5)
 
 #ra = recommend_alpha(X,M,y,delta,k,10,WtX=TRUE,norm.type = 2)
 
