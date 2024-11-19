@@ -779,6 +779,9 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   std::vector<double> xstd2;
   arma::vec xarma2;
   arma::vec lossit = arma::zeros<arma::vec>(2000);
+  arma::vec slossit = arma::zeros<arma::vec>(2000);
+  arma::vec nlossit = arma::zeros<arma::vec>(2000);
+  arma::vec plossit = arma::zeros<arma::vec>(2000);
   
   while(eps > tol && it <= maxit){
     loss_prev = loss;// fun.set_value(W,beta);
@@ -894,9 +897,12 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     double survloss = l["surv_loss"];
     Rcout << "surv loss: " << survloss << "\n";
+    slossit[it-1] = survloss;
     double nmfloss = l["nmf_loss"];
     Rcout << "nmf loss: " << nmfloss << "\n";
+    nlossit[it-1] = nmfloss;
     double penloss = l["penalty"];
+    plossit[it-1] = penloss;
     
     // Rcout << "loss\n" << loss << "\n";
     // Rcout << "surv loss\n" << survloss << "\n";
@@ -927,6 +933,9 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     Named("beta") = beta,
     Named("loss") = l,
     Named("lossit") = lossit,
+    Named("slossit") = slossit,
+    Named("nlossit") = nlossit,
+    Named("plossit") = plossit,
     Named("iter") = it);
   return L;
 }
