@@ -913,7 +913,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     if(verbose){
       Rprintf("iter: %d eps: %.8f loss: %.8f\n",it,eps,loss);
     }
-    if(it == maxit && !init){
+    if(it == maxit && !init && verbose){
       warning("coxNMF failed to converge");
     }
     it = it + 1;
