@@ -778,10 +778,10 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   VectorXd x;
   std::vector<double> xstd2;
   arma::vec xarma2;
-  arma::vec lossit = arma::zeros<arma::vec>(2000);
-  arma::vec slossit = arma::zeros<arma::vec>(2000);
-  arma::vec nlossit = arma::zeros<arma::vec>(2000);
-  arma::vec plossit = arma::zeros<arma::vec>(2000);
+  arma::vec lossit = arma::zeros<arma::vec>(maxit);
+  arma::vec slossit = arma::zeros<arma::vec>(maxit);
+  arma::vec nlossit = arma::zeros<arma::vec>(maxit);
+  arma::vec plossit = arma::zeros<arma::vec>(maxit);
   
   while(eps > tol && it <= maxit){
     loss_prev = loss;// fun.set_value(W,beta);
