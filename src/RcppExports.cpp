@@ -186,8 +186,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // optimize_loss_cpp
-List optimize_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H0, const arma::mat& W0, const arma::colvec& beta0, const arma::colvec& y, const arma::colvec& delta, double alpha, double lambda, double eta, double tol, int maxit, bool verbose, bool WtX, int norm_type, String penalty, bool init, double step, double mo);
-RcppExport SEXP _coxNMF_optimize_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP H0SEXP, SEXP W0SEXP, SEXP beta0SEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP tolSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP WtXSEXP, SEXP norm_typeSEXP, SEXP penaltySEXP, SEXP initSEXP, SEXP stepSEXP, SEXP moSEXP) {
+List optimize_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H0, const arma::mat& W0, const arma::colvec& beta0, const arma::colvec& y, const arma::colvec& delta, double alpha, double lambda, double eta, double tol, int maxit, bool verbose, bool WtX, int norm_type, String penalty, bool init, double step, double mo, bool BFGS);
+RcppExport SEXP _coxNMF_optimize_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP H0SEXP, SEXP W0SEXP, SEXP beta0SEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP tolSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP WtXSEXP, SEXP norm_typeSEXP, SEXP penaltySEXP, SEXP initSEXP, SEXP stepSEXP, SEXP moSEXP, SEXP BFGSSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -210,7 +210,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type init(initSEXP);
     Rcpp::traits::input_parameter< double >::type step(stepSEXP);
     Rcpp::traits::input_parameter< double >::type mo(moSEXP);
-    rcpp_result_gen = Rcpp::wrap(optimize_loss_cpp(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo));
+    Rcpp::traits::input_parameter< bool >::type BFGS(BFGSSEXP);
+    rcpp_result_gen = Rcpp::wrap(optimize_loss_cpp(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo, BFGS));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -225,7 +226,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coxNMF_cdfit_cox_dh_one_lambda_it", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda_it, 7},
     {"_coxNMF_update_beta_cpp", (DL_FUNC) &_coxNMF_update_beta_cpp, 6},
     {"_coxNMF_standardize", (DL_FUNC) &_coxNMF_standardize, 6},
-    {"_coxNMF_optimize_loss_cpp", (DL_FUNC) &_coxNMF_optimize_loss_cpp, 19},
+    {"_coxNMF_optimize_loss_cpp", (DL_FUNC) &_coxNMF_optimize_loss_cpp, 20},
     {NULL, NULL, 0}
 };
 

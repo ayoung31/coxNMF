@@ -58,7 +58,7 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
   }else{
     int N = X.n_cols;
     int P = X.n_rows;
-    //int s = arma::accu(M);
+    int s = arma::accu(M);
 // 
 //     // linear predictor
 //     arma::vec lp = exp((Mt % Xt) * W * beta);
@@ -100,6 +100,8 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
     arma::mat like = alpha * 2 * l.t() / N;
     //Rcout << "test1\n";
     arma::mat gradient = nmf - like;
+    Rcout << "recon"<< nmf.rows(0,5) << "\n";
+    Rcout << "like"<< like.rows(0,5) << "\n";
     
     arma::mat change = step * gradient + mo * changeprev;
 
@@ -152,7 +154,7 @@ List calc_loss_cpp(const arma::mat& Xt, const arma::mat& X,
                    const arma::vec& beta, double alpha, const arma::vec& y, 
                    const arma::vec& delta, double lambda, double eta, bool WtX) {
   
-  
+  int s = arma::accu(M);
   double nmf_loss = arma::accu(arma::square(Mt % (Xt - Ht * Wt)));// / arma::accu(M);
   double surv_loss = calc_surv_loss(X, M, Wt, beta, y, delta, WtX);
   double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2.0 + eta * arma::accu(arma::abs(beta)));
@@ -730,7 +732,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             const arma::colvec& delta, double alpha,
                             double lambda, double eta, double tol,
                             int maxit, bool verbose, bool WtX, int norm_type,
-                            String penalty, bool init, double step, double mo){
+                            String penalty, bool init, double step, double mo,
+                            bool BFGS){
   arma::mat H = H0;
   arma::mat Ht = trans(H);
   arma::mat W = W0;
@@ -797,29 +800,32 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
       //beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
     }
     
-    update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step,changeprev,mo);
     
-// 
-//     fun.set_value(beta,H);
-// 
-//     // convert H to arma::vec
-//     xarma = arma::vectorise(Wt);
-//     // convert to standard vector
-//     xstd = arma::conv_to < std::vector<double> >::from(xarma);
-//     // convert to eigen vectorXd
-//     x = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(xstd.data(), xstd.size());
-// 
-//     int niter = solver.minimize(fun, x, fx, lb, ub);
-//     //now convert x back to H
-//     //convert eigen vector x to std vector
-//     xstd2.assign(x.data(), x.data() + x.size());
-//     // //convert std vector to arma vector
-//     xarma2 = arma::conv_to< arma::colvec >::from(xstd2);
-//     // //create H by stacking arma vector into columns
-//     Wt = arma::reshape(xarma2,k,P);
-// 
-//     W = trans(Wt);
-
+    if(BFGS){
+      fun.set_value(beta,H);
+      
+      // convert H to arma::vec
+      xarma = arma::vectorise(Wt);
+      // convert to standard vector
+      xstd = arma::conv_to < std::vector<double> >::from(xarma);
+      // convert to eigen vectorXd
+      x = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(xstd.data(), xstd.size());
+      
+      int niter = solver.minimize(fun, x, fx, lb, ub);
+      //now convert x back to H
+      //convert eigen vector x to std vector
+      xstd2.assign(x.data(), x.data() + x.size());
+      // //convert std vector to arma vector
+      xarma2 = arma::conv_to< arma::colvec >::from(xstd2);
+      // //create H by stacking arma vector into columns
+      Wt = arma::reshape(xarma2,k,P);
+      
+      W = trans(Wt);
+    }else{
+      update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step,changeprev,mo);
+    }
+    
+    
     // if(it==93){
     //   Rcout << "H:\n" << H << "\n";
     // }
@@ -898,8 +904,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     plossit[it-1] = penloss;
     
     // Rcout << "loss\n" << loss << "\n";
-    // Rcout << "surv loss\n" << survloss << "\n";
-    // Rcout << "nmf loss\n" << nmfloss << "\n";
+    Rcout << "surv loss\n" << survloss*alpha << "\n";
+    Rcout << "nmf loss\n" << nmfloss << "\n";
     // Rcout << "penalty\n" << penloss << "\n";
     // 
     // Rcout << "W\n" << W.rows(0,4) << "\n";

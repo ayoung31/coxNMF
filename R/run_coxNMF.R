@@ -2,7 +2,7 @@
 run_coxNMF = function(X, y, delta, k, alpha, lambda, eta, H0 = NULL, W0 = NULL, 
                       beta0 = NULL, M = NULL, WtX = FALSE,
                       verbose = FALSE, norm_type = 2, tol = 1e-6, maxit = 10000,
-                      penalty = 'lasso',step=1e-2,mo=.8,...){
+                      penalty = 'lasso',step=1e-2,mo=.8,BFGS=TRUE,...){
   # Add all error checking here. This will be the primary function
   
   if(is.null(M)){
@@ -23,7 +23,7 @@ run_coxNMF = function(X, y, delta, k, alpha, lambda, eta, H0 = NULL, W0 = NULL,
   # Run the model
   fit = optimize_loss_cpp(X, M, H0, W0, beta0, y, delta, alpha, 
                           lambda, eta, tol, maxit, verbose, WtX, norm_type, 
-                          penalty, FALSE, step, mo)
+                          penalty, FALSE, step, mo, BFGS)
   
   return(fit)
 }
