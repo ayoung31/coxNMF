@@ -100,8 +100,8 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
     arma::mat like = alpha * 2 * l.t() / N;
     //Rcout << "test1\n";
     arma::mat gradient = nmf - like;
-    Rcout << "recon"<< nmf.rows(0,5) << "\n";
-    Rcout << "like"<< like.rows(0,5) << "\n";
+    // Rcout << "recon"<< nmf.rows(0,5) << "\n";
+    // Rcout << "like"<< like.rows(0,5) << "\n";
     
     arma::mat change = step * gradient + mo * changeprev;
 
@@ -904,8 +904,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     plossit[it-1] = penloss;
     
     // Rcout << "loss\n" << loss << "\n";
-    Rcout << "surv loss\n" << survloss*alpha << "\n";
-    Rcout << "nmf loss\n" << nmfloss << "\n";
+    // Rcout << "surv loss\n" << survloss*alpha << "\n";
+    // Rcout << "nmf loss\n" << nmfloss << "\n";
     // Rcout << "penalty\n" << penloss << "\n";
     // 
     // Rcout << "W\n" << W.rows(0,4) << "\n";
