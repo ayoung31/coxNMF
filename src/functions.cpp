@@ -143,7 +143,7 @@ double calc_surv_loss(const arma::mat& X, const arma::mat& M,
   arma::mat y_matrix = arma::repmat(y, 1, N);
   arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
   
-  return 2 * arma::accu(delta % (lp - arma::log(ind.t() * arma::exp(lp)))) / N;
+  return arma::accu(delta % (lp - arma::log(ind.t() * arma::exp(lp))));
   
 }
 
@@ -157,8 +157,8 @@ List calc_loss_cpp(const arma::mat& Xt, const arma::mat& X,
   int s = arma::accu(M);
   double nmf_loss = arma::accu(arma::square(Mt % (Xt - Ht * Wt)));// / arma::accu(M);
   double surv_loss = calc_surv_loss(X, M, Wt, beta, y, delta, WtX);
-  double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2.0 + eta * arma::accu(arma::abs(beta)));
-  double loss = nmf_loss - alpha * (surv_loss - penalty);
+  double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) + eta * arma::accu(arma::abs(beta)));
+  double loss = (1-alpha) * nmf_loss - alpha * s * (surv_loss - penalty);
   
   return List::create(
     Named("loss") = loss,
@@ -305,8 +305,8 @@ public:
     arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
 
     // compute gradient in matrix form
-    arma::mat nmf = H * (Mt % (Ht*Wt - Xt)) * 2.0; //* (2.0 / s);
-    arma::mat like = alpha * 2 * l / n;
+    arma::mat nmf =  H * (Mt % (Ht*Wt - Xt)) * 2.0 * (1 - alpha); //* (2.0 / s);
+    arma::mat like = alpha * s * l;
     //Rcout << "test1\n";
     arma::mat gradient = nmf - like;
     //Rcout << "test2\n";
