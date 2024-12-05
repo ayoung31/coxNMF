@@ -1,7 +1,7 @@
 #' @export
-get_mask <- function(Train,perc_miss){
-  n_train <- ncol(Train$X)
-  p_train <- nrow(Train$X)
+get_mask <- function(X,perc_miss){
+  n_train <- ncol(X)
+  p_train <- nrow(X)
   M <- matrix(1,nrow=p_train,ncol=n_train)
   n_miss <- floor(n_train*p_train*perc_miss)
   entries <- as.vector(outer(1:n_train, 1:p_train, paste, sep="_"))
