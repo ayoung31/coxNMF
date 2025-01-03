@@ -849,7 +849,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
       Wt = arma::reshape(xarma2,k,P);
       
       W = trans(Wt);
-      Rcout << W.rows(0,4) << "\n";
+      //Rcout << W.rows(0,4) << "\n";
       //sparsity(W,num_genes);
     }else{
       update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step,changeprev,mo);
