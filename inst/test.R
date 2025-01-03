@@ -3,7 +3,7 @@ library(dplyr)
 library(NMF)
 library(pheatmap)
 
-k=12
+k=6
 #read pre-filtered data
 tcga = readRDS('data/TCGA_PAAD_gencode_filtered.rds')
 
@@ -24,21 +24,26 @@ H0 = matrix(runif(n*k,0,max(X)),nrow=k)
 W0 = matrix(runif(p*k,0,max(X)),nrow=p)
 beta0 = rep(0,k)#runif(k,-.000001,.000001)
 #H0 = sweep(H0,2,colSums(H0),'/')
-init = nmfModel(k,X,W=W0,H=H0)
-fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
+# init = nmfModel(k,X,W=W0,H=H0)
+# fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
 
-samps = sample(1:length(y),floor(length(y)*2/3))
 
-fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=1,lambda=0,
+fit_cox_a0 = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=0,lambda=0,
                      eta=0,H0=H0,
-                     W0=W0,beta0=beta0,tol=1e-6,maxit=1000,verbose=TRUE,WtX=TRUE,
-                     step=1e-2,mo=.7,BFGS=TRUE)
+                     W0=W0,beta0=beta0,tol=1e-5,maxit=200,verbose=TRUE,WtX=TRUE,
+                     step=1e-2,mo=.7,BFGS=TRUE,gamma=1e2)
+
+fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=.2,lambda=0,
+                     eta=0,H0=H0,
+                     W0=W0,beta0=beta0,tol=1e-5,maxit=200,verbose=TRUE,WtX=TRUE,
+                     step=1e-2,mo=.7,BFGS=TRUE,gamma=1) 
 
 #ra = recommend_alpha(X,M,y,delta,k,10,WtX=TRUE,norm.type = 2)
 
-fit_surv = survival::coxph(survival::Surv(y,delta)~t(X)%*%fit_std@fit@W)
+# fit_surv = survival::coxph(survival::Surv(y,delta)~t(X)%*%fit_std@fit@W)
 
-cvwrapr::getCindex(t(X)%*%fit_std@fit@W%*%fit_cox$beta,survival::Surv(y,delta))
+# cvwrapr::getCindex(t(X)%*%fit_std@fit@W%*%fit_cox$beta,survival::Surv(y,delta))
+cvwrapr::getCindex(t(X)%*%fit_cox_a0$W%*%fit_cox_a0$beta,survival::Surv(y,delta))
 cvwrapr::getCindex(t(X)%*%fit_cox$W%*%fit_cox$beta,survival::Surv(y,delta))
 
 pheatmap(cor(t(rbind(fit_std@fit@H,fit_cox$H))),cluster_rows = FALSE,cluster_cols = FALSE)

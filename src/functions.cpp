@@ -152,13 +152,14 @@ List calc_loss_cpp(const arma::mat& Xt, const arma::mat& X,
                    const arma::mat& Mt, const arma::mat& M, 
                    const arma::mat& Wt, const arma::mat& Ht, const arma::mat& H,
                    const arma::vec& beta, double alpha, const arma::vec& y, 
-                   const arma::vec& delta, double lambda, double eta, bool WtX) {
+                   const arma::vec& delta, double lambda, double eta, bool WtX, 
+                   double gamma) {
   
   int s = arma::accu(M);
   double nmf_loss = arma::accu(arma::square(Mt % (Xt - Ht * Wt)));// / arma::accu(M);
   double surv_loss = calc_surv_loss(X, M, Wt, beta, y, delta, WtX);
   double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) + eta * arma::accu(arma::abs(beta)));
-  double loss = (1-alpha) * nmf_loss - alpha * s * (surv_loss - penalty);
+  double loss = (1-alpha) * (nmf_loss + gamma*arma::accu(Wt)) - alpha * s * (surv_loss - penalty);
   
   return List::create(
     Named("loss") = loss,
@@ -262,6 +263,7 @@ private:
   double lambda;
   double eta;
   bool WtX;
+  double gamma;
 public:
 
   Wupdate(const arma::mat& Mt_, const arma::mat& M_, 
@@ -270,9 +272,9 @@ public:
           const arma::vec& delta_, arma::mat& Ht_,
           arma::mat& H_,
           arma::vec& beta_, double alpha_, double lambda_,
-          double eta_, bool WtX_) : Mt(Mt_), M(M_), Xt(Xt_), X(X_), y(y_), 
+          double eta_, bool WtX_, double gamma_) : Mt(Mt_), M(M_), Xt(Xt_), X(X_), y(y_), 
           delta(delta_), Ht(Ht_), H(H_), beta(beta_),
-          alpha(alpha_), lambda(lambda_), eta(eta_), WtX(WtX_) {}
+          alpha(alpha_), lambda(lambda_), eta(eta_), WtX(WtX_), gamma(gamma_) {}
   double operator()(const VectorXd& x, VectorXd& grad)
   {
     double fx = 0.0;
@@ -305,7 +307,7 @@ public:
     arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
 
     // compute gradient in matrix form
-    arma::mat nmf =  H * (Mt % (Ht*Wt - Xt)) * 2.0 * (1 - alpha); //* (2.0 / s);
+    arma::mat nmf =  (H * (Mt % (Ht*Wt - Xt)) * 2.0 + gamma) * (1 - alpha); //* (2.0 / s);
     arma::mat like = alpha * s * l;
     //Rcout << "test1\n";
     arma::mat gradient = nmf - like;
@@ -324,7 +326,7 @@ public:
     //Rcout << "s:\n" << s << "\n";
 
     //COMPUTE FUNCTION VALUE
-    List loss = calc_loss_cpp(Xt,X,Mt,M,Wt,Ht,H,beta,alpha,y,delta,lambda,eta,WtX);
+    List loss = calc_loss_cpp(Xt,X,Mt,M,Wt,Ht,H,beta,alpha,y,delta,lambda,eta,WtX,gamma);
     fx = loss["loss"];
     return fx;
   }
@@ -700,15 +702,15 @@ void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
   
   
   // if(WtX){
-  //   arma::mat HH = H.rows(ns);
-  //   arma::rowvec col_sum = sum(HH, 0);
-  //   HH.each_row() /= col_sum;
-  //   H.rows(ns) = HH;
+    arma::mat HH = H.rows(ns);
+    arma::rowvec col_sum = sum(HH, 0);
+    HH.each_row() /= col_sum;
+    H.rows(ns) = HH;
   // }else{
-    arma::mat WW = W.cols(ns);
-    arma::rowvec col_sum = sum(WW, 0);
-    WW.each_row() /= col_sum;
-    W.cols(ns) = WW;
+    // arma::mat WW = W.cols(ns);
+    // arma::rowvec col_sum = sum(WW, 0);
+    // WW.each_row() /= col_sum;
+    // W.cols(ns) = WW;
   // }
   
   
@@ -724,6 +726,30 @@ void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
   return;
 }
 
+void sparsity(arma::mat& W, int num_genes){
+
+  int p = W.n_rows;
+  int k = W.n_cols;
+  arma::vec q = {1 - 1.0*num_genes/p};
+  Rcout << q << "\n";
+  arma::rowvec thresh = arma::conv_to<arma::rowvec>::from(quantile(W,q));
+  Rcout << thresh << "\n";
+  // Rcout << arma::sum(W.each_row() >= thresh,0) << "\n";
+  
+  // for(int j=0; j<=(k-1); j++){
+  //   for(int i=0; i<=(p-1); i++){
+  //     W(i,j) = W(i,j) < thresh(j);
+  //   }
+  // }
+  W.each_row([thresh](arma::rowvec& row){
+    row.elem(arma::find(row < thresh)).zeros();
+  });
+
+  Rcout << arma::sum(W != 0, 0) << "\n";
+
+   return;
+}
+
 //' @export
 // [[Rcpp::export]]
 List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
@@ -733,7 +759,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             double lambda, double eta, double tol,
                             int maxit, bool verbose, bool WtX, int norm_type,
                             String penalty, bool init, double step, double mo,
-                            bool BFGS){
+                            bool BFGS, int num_genes, double gamma){
   arma::mat H = H0;
   arma::mat Ht = trans(H);
   arma::mat W = W0;
@@ -769,7 +795,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   // Create solver and function object
   LBFGSpp::LBFGSBSolver<double> solver(param);
   // Declare function object Hupdate
-  Wupdate fun(Mt,M,Xt,X,y,delta,Ht,H,beta,alpha,lambda,eta,WtX);
+  Wupdate fun(Mt,M,Xt,X,y,delta,Ht,H,beta,alpha,lambda,eta,WtX, gamma);
 
   // bounds for constrained optimization
   VectorXd lb = VectorXd::Constant(P*k, 0.0);
@@ -786,11 +812,13 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   arma::vec nlossit = arma::zeros<arma::vec>(maxit);
   arma::vec plossit = arma::zeros<arma::vec>(maxit);
   
+  
   while(eps > tol && it <= maxit){
     loss_prev = loss;// fun.set_value(W,beta);
     
     
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX,ns);
+    standardize(W,H,beta,norm_type,WtX,ns);
     
     XtW = trans(M % X) * W;
     
@@ -821,6 +849,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
       Wt = arma::reshape(xarma2,k,P);
       
       W = trans(Wt);
+      Rcout << W.rows(0,4) << "\n";
+      //sparsity(W,num_genes);
     }else{
       update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step,changeprev,mo);
     }
@@ -850,7 +880,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     //   Rcout << "W:\n" << W.cols(0,0) << "\n";
     // }
     
-    //standardize(W,H,beta,norm_type,WtX,ns);
+    
     
     
     
@@ -892,7 +922,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     
 
-    l = calc_loss_cpp(Xt, X, Mt, M, W.t(), H.t(), H, beta, alpha, y, delta, lambda, eta, WtX);
+    l = calc_loss_cpp(Xt, X, Mt, M, W.t(), H.t(), H, beta, 
+                      alpha, y, delta, lambda, eta, WtX, gamma);
     loss = l["loss"];
     lossit[it-1] = loss;
     

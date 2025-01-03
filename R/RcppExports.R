@@ -14,8 +14,8 @@ calc_surv_loss <- function(X, M, Wt, beta, y, delta, WtX) {
     .Call(`_coxNMF_calc_surv_loss`, X, M, Wt, beta, y, delta, WtX)
 }
 
-calc_loss_cpp <- function(Xt, X, Mt, M, Wt, Ht, H, beta, alpha, y, delta, lambda, eta, WtX) {
-    .Call(`_coxNMF_calc_loss_cpp`, Xt, X, Mt, M, Wt, Ht, H, beta, alpha, y, delta, lambda, eta, WtX)
+calc_loss_cpp <- function(Xt, X, Mt, M, Wt, Ht, H, beta, alpha, y, delta, lambda, eta, WtX, gamma) {
+    .Call(`_coxNMF_calc_loss_cpp`, Xt, X, Mt, M, Wt, Ht, H, beta, alpha, y, delta, lambda, eta, WtX, gamma)
 }
 
 cdfit_cox_dh <- function(X, d, penalty, lambda, eps, max_iter, gamma, m, alpha, dfmax, user, warn) {
@@ -40,7 +40,7 @@ standardize <- function(W, H, beta, norm_type, WtX, ns) {
 }
 
 #' @export
-optimize_loss_cpp <- function(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo, BFGS) {
-    .Call(`_coxNMF_optimize_loss_cpp`, X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo, BFGS)
+optimize_loss_cpp <- function(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo, BFGS, num_genes, gamma) {
+    .Call(`_coxNMF_optimize_loss_cpp`, X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo, BFGS, num_genes, gamma)
 }
 
