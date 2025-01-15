@@ -697,7 +697,7 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
 
 //' @export
 // [[Rcpp::export]]
-void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
+void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta,
                  bool WtX, arma::uvec ns){
   
   
@@ -726,29 +726,29 @@ void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
   return;
 }
 
-void sparsity(arma::mat& W, int num_genes){
-
-  int p = W.n_rows;
-  int k = W.n_cols;
-  arma::vec q = {1 - 1.0*num_genes/p};
-  Rcout << q << "\n";
-  arma::rowvec thresh = arma::conv_to<arma::rowvec>::from(quantile(W,q));
-  Rcout << thresh << "\n";
-  // Rcout << arma::sum(W.each_row() >= thresh,0) << "\n";
-  
-  // for(int j=0; j<=(k-1); j++){
-  //   for(int i=0; i<=(p-1); i++){
-  //     W(i,j) = W(i,j) < thresh(j);
-  //   }
-  // }
-  W.each_row([thresh](arma::rowvec& row){
-    row.elem(arma::find(row < thresh)).zeros();
-  });
-
-  Rcout << arma::sum(W != 0, 0) << "\n";
-
-   return;
-}
+// void sparsity(arma::mat& W, int num_genes){
+// 
+//   int p = W.n_rows;
+//   int k = W.n_cols;
+//   arma::vec q = {1 - 1.0*num_genes/p};
+//   Rcout << q << "\n";
+//   arma::rowvec thresh = arma::conv_to<arma::rowvec>::from(quantile(W,q));
+//   Rcout << thresh << "\n";
+//   // Rcout << arma::sum(W.each_row() >= thresh,0) << "\n";
+//   
+//   // for(int j=0; j<=(k-1); j++){
+//   //   for(int i=0; i<=(p-1); i++){
+//   //     W(i,j) = W(i,j) < thresh(j);
+//   //   }
+//   // }
+//   W.each_row([thresh](arma::rowvec& row){
+//     row.elem(arma::find(row < thresh)).zeros();
+//   });
+// 
+//   Rcout << arma::sum(W != 0, 0) << "\n";
+// 
+//    return;
+// }
 
 //' @export
 // [[Rcpp::export]]
@@ -757,9 +757,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                             const arma::colvec& beta0, const arma::colvec& y,
                             const arma::colvec& delta, double alpha,
                             double lambda, double eta, double tol,
-                            int maxit, bool verbose, bool WtX, int norm_type,
-                            String penalty, bool init, double step, double mo,
-                            bool BFGS, int num_genes, double gamma){
+                            int maxit, bool verbose, bool WtX,
+                            String penalty, bool BFGS, double gamma){
   arma::mat H = H0;
   arma::mat Ht = trans(H);
   arma::mat W = W0;
@@ -818,7 +817,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     
     update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX,ns);
-    standardize(W,H,beta,norm_type,WtX,ns);
+    standardize(W,H,beta,WtX,ns);
     
     XtW = trans(M % X) * W;
     
@@ -852,7 +851,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
       //Rcout << W.rows(0,4) << "\n";
       //sparsity(W,num_genes);
     }else{
-      update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step,changeprev,mo);
+      //update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type,ns,step,changeprev,mo);
     }
     
     
@@ -950,7 +949,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     if(verbose){
       Rprintf("iter: %d eps: %.8f loss: %.8f\n",it,eps,loss);
     }
-    if(it == maxit && !init && verbose){
+    if(it == maxit && verbose){
       warning("coxNMF failed to converge");
     }
     it = it + 1;

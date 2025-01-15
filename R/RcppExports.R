@@ -35,12 +35,12 @@ update_beta_cpp <- function(X, y, penalty, alpha, lambda, beta0) {
 }
 
 #' @export
-standardize <- function(W, H, beta, norm_type, WtX, ns) {
-    invisible(.Call(`_coxNMF_standardize`, W, H, beta, norm_type, WtX, ns))
+standardize <- function(W, H, beta, WtX, ns) {
+    invisible(.Call(`_coxNMF_standardize`, W, H, beta, WtX, ns))
 }
 
 #' @export
-optimize_loss_cpp <- function(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo, BFGS, num_genes, gamma) {
-    .Call(`_coxNMF_optimize_loss_cpp`, X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo, BFGS, num_genes, gamma)
+optimize_loss_cpp <- function(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, penalty, BFGS, gamma) {
+    .Call(`_coxNMF_optimize_loss_cpp`, X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, penalty, BFGS, gamma)
 }
 

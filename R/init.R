@@ -1,6 +1,26 @@
+#' Initializes the coxNMF model
+#' 
+#' Outputs the model with the smallest loss value across many random initializations
+#'
+#' @param X matrix of gene expression values of dimension p genes by n samples
+#' @param y a vector of n survival times 
+#' @param delta a vector of n event indicators 0=censored, 1=died
+#' @param k the rank of the NMF decomposition
+#' @param alpha the balancing parameter for NMF and survival contribution to loss
+#' @param lambda parameter for penalty on the coefficients in survival model
+#' @param eta parameter for balance of l1 and l2 penalty on the coefficients, eta=1 is all l1
+#' @param gamma parameter for l1 penalty on W
+#' @param WtX boolean indicator if TRUE, rows of WtX are the covariates fed to the survival model, if FALSE, rows of H are the covariates
+#' @param BFGS whether to run BFGS for updating W
+#' @param penalty the type of penalty on the survival coefficients
+#' @param verbose if TRUE prints loss at each iteration
+#' @param tol convergence criteria
+#' @param ninit number of initializations
+#' @param imaxit max number of iterations for each initialization
+#'
 #' @export
-init = function(X, M, y, delta, k, alpha, lambda, eta, WtX, norm.type, 
-                 penalty, verbose, tol, ninit=5, imaxit=10, warmup=1){
+init = function(X, M, y, delta, k, alpha, lambda=0, eta=0, gamma=0, WtX=TRUE, BFGS=TRUE,
+                 penalty='lasso', verbose=FALSE, tol=1e-6, ninit=10, imaxit=15){
   
   # if(warmup >= imaxit){
   #   warning('Maxit must be larger than warmup')
@@ -15,7 +35,7 @@ init = function(X, M, y, delta, k, alpha, lambda, eta, WtX, norm.type,
     beta0 = rep(0,k)
 
     fit = optimize_loss_cpp(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta,
-                              tol, imaxit, verbose, WtX, norm.type, penalty, TRUE)
+                              tol, imaxit, verbose, WtX, penalty,BFGS,gamma)
     # fit = optimize_loss_cpp(X, M, fit0$H, fit0$W, fit0$beta, y, delta, alpha,
     #                          lambda, eta, tol, max(imaxit-warmup,0), verbose, 
     #                          WtX, norm.type, penalty, TRUE)

@@ -172,23 +172,22 @@ BEGIN_RCPP
 END_RCPP
 }
 // standardize
-void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type, bool WtX, arma::uvec ns);
-RcppExport SEXP _coxNMF_standardize(SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP norm_typeSEXP, SEXP WtXSEXP, SEXP nsSEXP) {
+void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, bool WtX, arma::uvec ns);
+RcppExport SEXP _coxNMF_standardize(SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP WtXSEXP, SEXP nsSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat& >::type W(WSEXP);
     Rcpp::traits::input_parameter< arma::mat& >::type H(HSEXP);
     Rcpp::traits::input_parameter< arma::colvec& >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< int >::type norm_type(norm_typeSEXP);
     Rcpp::traits::input_parameter< bool >::type WtX(WtXSEXP);
     Rcpp::traits::input_parameter< arma::uvec >::type ns(nsSEXP);
-    standardize(W, H, beta, norm_type, WtX, ns);
+    standardize(W, H, beta, WtX, ns);
     return R_NilValue;
 END_RCPP
 }
 // optimize_loss_cpp
-List optimize_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H0, const arma::mat& W0, const arma::colvec& beta0, const arma::colvec& y, const arma::colvec& delta, double alpha, double lambda, double eta, double tol, int maxit, bool verbose, bool WtX, int norm_type, String penalty, bool init, double step, double mo, bool BFGS, int num_genes, double gamma);
-RcppExport SEXP _coxNMF_optimize_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP H0SEXP, SEXP W0SEXP, SEXP beta0SEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP tolSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP WtXSEXP, SEXP norm_typeSEXP, SEXP penaltySEXP, SEXP initSEXP, SEXP stepSEXP, SEXP moSEXP, SEXP BFGSSEXP, SEXP num_genesSEXP, SEXP gammaSEXP) {
+List optimize_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& H0, const arma::mat& W0, const arma::colvec& beta0, const arma::colvec& y, const arma::colvec& delta, double alpha, double lambda, double eta, double tol, int maxit, bool verbose, bool WtX, String penalty, bool BFGS, double gamma);
+RcppExport SEXP _coxNMF_optimize_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP H0SEXP, SEXP W0SEXP, SEXP beta0SEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP tolSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP WtXSEXP, SEXP penaltySEXP, SEXP BFGSSEXP, SEXP gammaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -206,15 +205,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< bool >::type WtX(WtXSEXP);
-    Rcpp::traits::input_parameter< int >::type norm_type(norm_typeSEXP);
     Rcpp::traits::input_parameter< String >::type penalty(penaltySEXP);
-    Rcpp::traits::input_parameter< bool >::type init(initSEXP);
-    Rcpp::traits::input_parameter< double >::type step(stepSEXP);
-    Rcpp::traits::input_parameter< double >::type mo(moSEXP);
     Rcpp::traits::input_parameter< bool >::type BFGS(BFGSSEXP);
-    Rcpp::traits::input_parameter< int >::type num_genes(num_genesSEXP);
     Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
-    rcpp_result_gen = Rcpp::wrap(optimize_loss_cpp(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, init, step, mo, BFGS, num_genes, gamma));
+    rcpp_result_gen = Rcpp::wrap(optimize_loss_cpp(X, M, H0, W0, beta0, y, delta, alpha, lambda, eta, tol, maxit, verbose, WtX, penalty, BFGS, gamma));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -228,8 +222,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coxNMF_cdfit_cox_dh_one_lambda", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda, 8},
     {"_coxNMF_cdfit_cox_dh_one_lambda_it", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda_it, 7},
     {"_coxNMF_update_beta_cpp", (DL_FUNC) &_coxNMF_update_beta_cpp, 6},
-    {"_coxNMF_standardize", (DL_FUNC) &_coxNMF_standardize, 6},
-    {"_coxNMF_optimize_loss_cpp", (DL_FUNC) &_coxNMF_optimize_loss_cpp, 22},
+    {"_coxNMF_standardize", (DL_FUNC) &_coxNMF_standardize, 5},
+    {"_coxNMF_optimize_loss_cpp", (DL_FUNC) &_coxNMF_optimize_loss_cpp, 17},
     {NULL, NULL, 0}
 };
 

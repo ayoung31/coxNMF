@@ -22,16 +22,12 @@ p=nrow(X)
 set.seed(22)
 H0 = matrix(runif(n*k,0,max(X)),nrow=k)
 W0 = matrix(runif(p*k,0,max(X)),nrow=p)
-beta0 = rep(0,k)#runif(k,-.000001,.000001)
-#H0 = sweep(H0,2,colSums(H0),'/')
-# init = nmfModel(k,X,W=W0,H=H0)
-# fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
+beta0 = rep(0,k)
 
 
 fit_cox_a0 = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=0,lambda=0,
-                     eta=0,H0=H0,
-                     W0=W0,beta0=beta0,tol=1e-5,maxit=200,verbose=TRUE,WtX=TRUE,
-                     step=1e-2,mo=.7,BFGS=TRUE,gamma=1e2)
+                     eta=0,tol=1e-5,maxit=200,verbose=TRUE,WtX=TRUE,
+                     BFGS=TRUE,gamma=1e2,ninit=2,imaxit=5)
 
 fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=.2,lambda=0,
                      eta=0,H0=H0,
