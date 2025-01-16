@@ -275,7 +275,7 @@ public:
     //Rcout << "test2\n";
     // convert to armadillo vector
     arma::vec v = arma::vectorise(gradient);
-
+    
     // convert to standard vector
     std::vector<double> v2 = arma::conv_to < std::vector<double> >::from(v);
     // convert to eigen vectorXd
