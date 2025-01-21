@@ -78,7 +78,7 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
     // Rcout << temp2.rows(0,10) << "\n\n";
     // Rcout << temp3.rows(0,10) << "\n\n";
     W = (W / ((M % (W*H)) * Ht)) %
-      arma::clamp(((M % X) * Ht) + (alpha * s / N) * trans(l),0,arma::datum::inf);
+      arma::clamp(((M % X) * Ht) + (alpha * s / (2 * (1-alpha))) * trans(l),0,arma::datum::inf);
       //arma::clamp(W % ((M % X) * Ht + (alpha * s / N) * trans(l)) / ((M % (W*H)) * Ht), 1e-10, arma::datum::inf);
   }
   
@@ -111,7 +111,7 @@ double calc_surv_loss(const arma::mat& X, const arma::mat& M, const arma::mat& W
   arma::mat y_matrix = arma::repmat(y, 1, N);
   arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
   
-  return 2 * arma::accu(delta % (lp - arma::log(ind.t() * arma::exp(lp)))) / N;
+  return arma::accu(delta % (lp - arma::log(ind.t() * arma::exp(lp))));
   
 }
 
@@ -124,7 +124,7 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, c
   double nmf_loss = arma::accu(arma::square(M % (X - W * H)));// / arma::accu(M);
   double surv_loss = calc_surv_loss(X, M, W, H, beta, y, delta, WtX);
   double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + eta * arma::accu(arma::abs(beta)));
-  double loss = nmf_loss - alpha * (surv_loss - penalty);
+  double loss = (1-alpha)*nmf_loss - alpha * arma::accu(M)*(surv_loss - penalty);
   
   return List::create(
     Named("loss") = loss,
