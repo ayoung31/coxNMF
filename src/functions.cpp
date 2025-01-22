@@ -633,7 +633,7 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
   //Rcout << sdX << "\n";
   XX.each_row() -= meanX;
   XX.each_row() /= sdX;
-  Rcout << XX.rows(0,4) << "\n";
+  //Rcout << XX.rows(0,4) << "\n";
   arma::uvec ns = arma::find(sdX > .000001);
   XX = XX.cols(ns);
   int p = XX.n_cols;
@@ -728,6 +728,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   std::vector<double> xstd2;
   arma::vec xarma2;
   
+  arma::vec lossit = arma::zeros<arma::vec>(maxit);
+  
   while(eps > tol && it <= maxit){
     loss_prev = loss;// fun.set_value(W,beta);
 
@@ -819,6 +821,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // Rcout << "lp\n" << lptemp.rows(0,4) << "\n";
 
     eps = std::abs(loss - loss_prev)/loss_prev;
+    
+    lossit[it] = loss;
 
     it = it + 1;
     if(verbose){
@@ -835,6 +839,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     Named("H") = H,
     Named("beta") = beta,
     Named("loss") = l,
-    Named("iter") = it);
+    Named("iter") = it,
+    Named("lossit") = lossit);
   return L;
 }
