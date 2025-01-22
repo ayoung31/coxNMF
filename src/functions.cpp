@@ -731,6 +731,13 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   arma::vec lossit = arma::zeros<arma::vec>(maxit);
   
   while(eps > tol && it <= maxit){
+    
+    if(verbose){
+      Rcout << "W:" << W.rows(0,4) << "\n";
+      Rcout << "H:" << H.cols(0,4) << "\n";
+      Rcout << "beta: " << beta << "\n";
+    }
+    
     loss_prev = loss;// fun.set_value(W,beta);
 
     // fun.set_value(H,beta);
