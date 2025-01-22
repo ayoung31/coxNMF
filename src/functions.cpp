@@ -60,7 +60,9 @@ void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M,
     int s = arma::accu(M);
 
     // linear predictor
+    Rcout << "test1\n";
     arma::vec lp = exp((Mt % Xt) * W * beta);
+    Rcout << "test2\n";
 
     // Indicator matrix
     arma::mat y_matrix = arma::repmat(y, 1, N);
@@ -733,7 +735,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   while(eps > tol && it <= maxit){
     
     if(verbose){
-      Rcout << "W:" << W.rows(0,4) << "\n";
+      Rcout << "W1:" << W.rows(0,4) << "\n";
       Rcout << "H:" << H.cols(0,4) << "\n";
       Rcout << "beta: " << beta << "\n";
     }
@@ -762,7 +764,9 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type);
     //Rcout << "W:\n" << W.rows(0,4) << "\n";
-    
+    if(verbose){
+      Rcout << "W2:" << W.rows(0,4) << "\n";
+    }
     
     if(WtX){
       beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
