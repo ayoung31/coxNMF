@@ -622,7 +622,6 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d, Str
 arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty,
                           double alpha, double lambda, arma::vec beta0){
 
-  Rcout << "WtX:" << X.rows(0,4) << "\n";
   // Order y by time
   arma::uvec tOrder = arma::sort_index(y.col(0));
   arma::vec yy = arma::conv_to<arma::vec>::from(y.col(0)).elem(tOrder);
@@ -636,23 +635,20 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
   XX.each_row() /= sdX;
   //Rcout << XX.rows(0,4) << "\n";
   arma::uvec ns = arma::find(sdX > .000001);
-  Rcout << "ns:" << ns << "\n";
   XX = XX.cols(ns);
-  Rcout << "WtX2:" << XX.rows(0,4) << "\n";
   int p = XX.n_cols;
 
   arma::vec penalty_factor = arma::ones<arma::vec>(p);
   penalty_factor = penalty_factor.elem(ns);
-  Rcout << "test 1" << "\n";
   // perform coordinate descent
   arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, penalty, lambda,
                                            beta0, penalty_factor, alpha);
-  Rcout << "test 2" << "\n";
+
   // Unstandardize coefficients
   arma::vec beta = arma::zeros<arma::vec>(X.n_cols);
   arma::vec bb = b / sdX.t();
   beta.elem(ns) = bb;
-  Rcout << "test 3" << "\n";
+
   return beta;
 }
 
@@ -735,11 +731,6 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   
   while(eps > tol && it <= maxit){
     
-    if(verbose){
-      Rcout << "W1:" << W.rows(0,4) << "\n";
-      Rcout << "H:" << H << "\n";
-      Rcout << "beta: " << beta << "\n";
-    }
     
     loss_prev = loss;// fun.set_value(W,beta);
 
@@ -765,13 +756,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type);
     //Rcout << "W:\n" << W.rows(0,4) << "\n";
-    if(verbose){
-      Rcout << "W2:" << W.rows(0,4) << "\n";
-      Rcout << "nan" << W.has_nan() << "\n";
-    }
-    Rcout << "help1" << "\n";
+
     if(WtX){
-      Rcout << "help2" << "\n";
       beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
     }else{
       beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
