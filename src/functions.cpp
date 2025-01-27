@@ -794,7 +794,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // 
     // 
     // // standardize
-    standardize(W,H,beta,norm_type,WtX);
+    //standardize(W,H,beta,norm_type,WtX);
 
     //Rcout << "Hstd:\n" << H.cols(0,4) << "\n";
     // 
