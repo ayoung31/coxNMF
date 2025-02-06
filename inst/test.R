@@ -3,32 +3,33 @@ library(dplyr)
 library(NMF)
 library(pheatmap)
 
-k=10
+k=5
 #read pre-filtered data
-tcga = readRDS('data/TCGA_PAAD_gencode_filtered.rds')
-
-X=as.matrix(tcga$ex)
+X= readRDS('data/filtered_subfraction_only.rds')
+X=as.matrix(X)
 #X = sqrt(X)
-y=tcga$sampInfo$Follow.up.days
-delta=-1*(as.numeric(tcga$sampInfo$Censored.1yes.0no)-2)
+y=rep(0,ncol(X))
+delta=rep(0,ncol(X))
+Train=list()
+Train$X=X
 
-M = matrix(1,ncol=ncol(X),nrow=nrow(X))
 
 n=ncol(X)
 p=nrow(X)
 
 
 #initialize parameters
-set.seed(22)
+set.seed(86)
 H0 = matrix(runif(n*k,0,max(X)),nrow=k)
 W0 = matrix(runif(p*k,0,max(X)),nrow=p)
 beta0 = rep(0,k)#runif(k,-.000001,.000001)
+M = get_mask(Train,.3)
 #H0 = sweep(H0,2,colSums(H0),'/')
-init = nmfModel(k,X,W=W0,H=H0)
-fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
+# init = nmfModel(k,X,W=W0,H=H0)
+# fit_std = nmf(X,k,"lee",seed=init,.options="v10",)
 
-fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=4,lambda=0,eta=0,H0=H0,
-                     W0=W0,beta0=beta0,tol=1e-8,maxit=4000,verbose=TRUE,WtX=TRUE)
+fit_cox = run_coxNMF(X=X,y=y,delta=delta,k=k,alpha=0,lambda=0,eta=0,H0=H0,
+                     W0=W0,beta0=beta0,M=M,tol=1e-7,maxit=2000,verbose=TRUE,WtX=TRUE)
 
 #ra = recommend_alpha(X,M,y,delta,k,10,WtX=TRUE,norm.type = 2)
 
