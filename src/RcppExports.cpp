@@ -52,20 +52,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // calc_surv_loss
-double calc_surv_loss(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::mat& H, const arma::vec& beta, const arma::vec& y, const arma::vec& delta, bool WtX);
-RcppExport SEXP _coxNMF_calc_surv_loss(SEXP XSEXP, SEXP MSEXP, SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP WtXSEXP) {
+double calc_surv_loss(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::vec& beta, const arma::vec& y, const arma::vec& delta, bool WtX);
+RcppExport SEXP _coxNMF_calc_surv_loss(SEXP XSEXP, SEXP MSEXP, SEXP WSEXP, SEXP betaSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP WtXSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type M(MSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type W(WSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type H(HSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< bool >::type WtX(WtXSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_surv_loss(X, M, W, H, beta, y, delta, WtX));
+    rcpp_result_gen = Rcpp::wrap(calc_surv_loss(X, M, W, beta, y, delta, WtX));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -208,7 +207,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_coxNMF_update_H_cpp", (DL_FUNC) &_coxNMF_update_H_cpp, 9},
     {"_coxNMF_update_W_cpp", (DL_FUNC) &_coxNMF_update_W_cpp, 12},
-    {"_coxNMF_calc_surv_loss", (DL_FUNC) &_coxNMF_calc_surv_loss, 8},
+    {"_coxNMF_calc_surv_loss", (DL_FUNC) &_coxNMF_calc_surv_loss, 7},
     {"_coxNMF_calc_loss_cpp", (DL_FUNC) &_coxNMF_calc_loss_cpp, 11},
     {"_coxNMF_cdfit_cox_dh", (DL_FUNC) &_coxNMF_cdfit_cox_dh, 12},
     {"_coxNMF_cdfit_cox_dh_one_lambda", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda, 8},
