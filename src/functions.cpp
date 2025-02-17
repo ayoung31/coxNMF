@@ -6,103 +6,60 @@ using namespace Rcpp;
 
 
 // [[Rcpp::export]]
-void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W,
-                       const arma::colvec& beta, arma::mat& H, 
-                       const arma::colvec& y, const arma::colvec& delta, 
-                       double alpha, bool WtX) {
+void update_H_cpp(const arma::mat& X, const arma::mat& M, 
+                  const arma::colvec& y, const arma::colvec& delta, 
+                  const arma::mat& W, arma::mat& H) {
+  
   arma::mat Wt = W.t();
-  if(WtX){
-    H = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
-  }else{
-    int N = H.n_cols;
-    
-    // linear predictor
-    arma::vec lp = exp(H.t() * beta);
-    
-    // Indicator matrix
-    arma::mat y_matrix = arma::repmat(y, 1, N);
-    arma::mat I = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
-    
-    // intermediate matrix
-    arma::mat temp = I.t() % arma::repmat(lp.t(),N,1) / arma::repmat(I.t() * lp, 1, N);
-    
-    // derivative of log likelihood
-    arma::rowvec delta_t = delta.t();
-    arma::mat l = arma::kron(delta.t() - (delta.t() * temp),beta);
-    
-    // H update
-    H = (H / (Wt * (M % (W * H)))) %
-      arma::clamp((Wt * (M % X)) + (alpha * arma::accu(M) / N) *
-      l,0,arma::datum::inf);
-    //H = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
-  }
+  H = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
   
   return;
 }
 
 // [[Rcpp::export]]
-void update_W_cpp(const arma::mat& X, const arma::mat& Xt, const arma::mat& M, 
-                  const arma::mat& Mt, const arma::mat& H,
-                       arma::mat& W, const arma::colvec& beta, 
-                       const arma::colvec& y, const arma::colvec& delta, 
-                       double alpha, bool WtX, int norm_type) {
-  if(!WtX){
-    W = W % ((M % X) * H.t()) / ((M % (W * H)) * H.t());
-  }else{
-    int N = X.n_cols;
-    int P = X.n_rows;
-    int s = arma::accu(M);
+void update_W_cpp(const arma::mat& X, const arma::mat& M, 
+                  const arma::colvec& y, const arma::colvec& delta,
+                  arma::mat& W, const arma::mat& H, const arma::colvec& beta, 
+                  double alpha) {
 
-    // linear predictor
-    arma::vec lp = exp((Mt % Xt) * W * beta);
+  int N = X.n_cols;
+  int P = X.n_rows;
+  int s = arma::accu(M);
+  
+  //necessary transposed matrices
+  arma::mat Ht = H.t();
+  arma::mat Xt = X.t();
+  arma::mat Mt = M.t();
 
-    // Indicator matrix
-    arma::mat y_matrix = arma::repmat(y, 1, N);
-    arma::mat Y = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
-    arma::mat oneNP = arma::ones(N,P);
+  // linear predictor
+  arma::vec lp = exp((Mt % Xt) * W * beta);
 
-    // derivative of log likelihood
-    arma::mat LP = diagmat(lp);
-    arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
-    arma::mat Ht = H.t();
-    // arma::mat temp1 = (M % X) * Ht;
-    // arma::mat temp2 = (alpha * s / N) * l;
-    // arma::mat temp3 = temp1 + temp2;
-    // Rcout << temp1.rows(0,10) << "\n\n";
-    // Rcout << temp2.rows(0,10) << "\n\n";
-    // Rcout << temp3.rows(0,10) << "\n\n";
-    W = (W / ((M % (W*H)) * Ht)) %
-      arma::clamp(((M % X) * Ht) + (alpha * s / (2 * (1-alpha))) * trans(l),0,arma::datum::inf);
-    W.elem( find_nonfinite(W) ).zeros();
-      //arma::clamp(W % ((M % X) * Ht + (alpha * s / N) * trans(l)) / ((M % (W*H)) * Ht), 1e-10, arma::datum::inf);
-  }
+  // Indicator matrix
+  arma::mat y_matrix = arma::repmat(y, 1, N);
+  arma::mat Y = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
+  arma::mat oneNP = arma::ones(N,P);
+
+  // derivative of log likelihood
+  arma::mat LP = diagmat(lp);
+  arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
   
   
-  // if(norm_type == 1){
-  //   arma::colvec row_sums = sum(W, 1);
-  //   W.each_col() /= row_sums;
-  // }else if(norm_type == 2){
-  //   arma::rowvec col_sums = sum(W, 0);
-  //   W.each_row() /= col_sums;
-  // }
+  W = (W / ((M % (W*H)) * Ht)) %
+    arma::clamp(((M % X) * Ht) + (alpha * s / (2 * (1-alpha))) * trans(l),0,arma::datum::inf);
+  W.elem( find_nonfinite(W) ).zeros();
   
   return;
 }
 
 //' @export
 // [[Rcpp::export]]
-double calc_surv_loss(const arma::mat& X, const arma::mat& M, const arma::mat& W,
-                      const arma::vec& beta, const arma::vec& y,
-                      const arma::vec& delta, bool WtX){
+double calc_surv_loss(const arma::mat& X, const arma::mat& M, 
+                      const arma::vec& y, const arma::vec& delta,
+                      const arma::mat& W, const arma::vec& beta){
   int N = X.n_cols;
   // int N = H.n_cols;
   arma::colvec lp;
-  
-  // if(!WtX){
-  //   lp = H.t() * beta;
-  // }else{
-  //   lp = trans(M % X) * W * beta;
-  // }
+
   lp = trans(M % X) * W * beta;
   arma::mat y_matrix = arma::repmat(y, 1, N);
   arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
@@ -111,14 +68,16 @@ double calc_surv_loss(const arma::mat& X, const arma::mat& M, const arma::mat& W
   
 }
 
+//' @export
 // [[Rcpp::export]]
-List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, const arma::mat& H,
-                   const arma::vec& beta, double alpha, const arma::vec& y, 
-                   const arma::vec& delta, double lambda, double eta, bool WtX) {
+List calc_loss_cpp(const arma::mat& X, const arma::mat& M, 
+                   const arma::vec& y, const arma::vec& delta, 
+                   const arma::mat& W, const arma::mat& H, const arma::vec& beta, 
+                   double alpha, double lambda, double eta) {
   
   
   double nmf_loss = arma::accu(arma::square(M % (X - W * H)));// / arma::accu(M);
-  double surv_loss = calc_surv_loss(X, M, W, beta, y, delta, WtX);
+  double surv_loss = calc_surv_loss(X, M, y, delta, W, beta);
   double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + eta * arma::accu(arma::abs(beta)));
   double loss = (1-alpha)*nmf_loss - alpha * arma::accu(M)*(surv_loss - penalty);
   
@@ -131,45 +90,6 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::mat& W, c
 }
 
 // Everything for updating beta below
-
-// double MCP(double z, double l1, double l2, double gamma, double v) {
-//   double s = 0;
-//   
-//   // Determine the sign of z
-//   if (z > 0) 
-//     s = 1;
-//   else if (z < 0) 
-//     s = -1;
-//   
-//   // Apply MCP penalty based on the value of z
-//   if (std::abs(z) <= l1) 
-//     return 0; // No penalty
-//   else if (std::abs(z) <= gamma * l1 * (1 + l2)) 
-//     return s * (std::abs(z) - l1) / (v * (1 + l2 - 1 / gamma)); // MCP penalty
-//   else 
-//     return z / (v * (1 + l2));
-// }
-
-// double SCAD(double z, double l1, double l2, double gamma, double v) {
-//   double s = 0;
-//   
-//   // Determine the sign of z
-//   if (z > 0) 
-//     s = 1;
-//   else if (z < 0) 
-//     s = -1;
-//   
-//   // Apply SCAD penalty based on the value of z
-//   if (std::abs(z) <= l1) 
-//     return 0; // No penalty
-//   else if (std::abs(z) <= (l1 * (1 + l2) + l1)) 
-//     return s * (std::abs(z) - l1) / (v * (1 + l2)); // SCAD penalty
-//   else if (std::abs(z) <= gamma * l1 * (1 + l2)) 
-//     return s * (std::abs(z) - gamma * l1 / (gamma - 1)) / (v * (1 - 1 / (gamma - 1) + l2)); // SCAD penalty
-//   else 
-//     return z / (v * (1 + l2)); // No penalty
-// }
-
 double lasso(double z, double l1, double l2, double v) {
   double s = 0;
   
@@ -187,7 +107,7 @@ double lasso(double z, double l1, double l2, double v) {
 }
 
 // [[Rcpp::export]]
-arma::mat cdfit_cox_dh(const arma::mat& X, const arma::vec& d, String penalty, 
+arma::mat cdfit_cox_dh(const arma::mat& X, const arma::vec& d,
                        const arma::vec& lambda, double eps, int max_iter, double gamma,
                        const arma::vec& m, double alpha, int dfmax, bool user, bool warn) {
   
@@ -269,7 +189,7 @@ arma::mat cdfit_cox_dh(const arma::mat& X, const arma::vec& d, String penalty,
             l2 = lambda[l] * m[j] * (1 - alpha);
             //if (penalty == "MCP") b(j,l) = MCP(u, l1, l2, gamma, v);
             //if (penalty == "SCAD") b(j,l) = SCAD(u, l1, l2, gamma, v);
-            if (penalty == "lasso") b(j,l) = lasso(u, l1, l2, v);
+            b(j,l) = lasso(u, l1, l2, v);
             
             shift = b(j,l) - a[j];
             if (shift != 0) {
@@ -309,7 +229,7 @@ arma::mat cdfit_cox_dh(const arma::mat& X, const arma::vec& d, String penalty,
 }
 
 // [[Rcpp::export]]
-arma::vec cdfit_cox_dh_one_lambda(const arma::mat& X, const arma::vec& d, String penalty,
+arma::vec cdfit_cox_dh_one_lambda(const arma::mat& X, const arma::vec& d, 
                   double lambda, double eps, int max_iter,
                   const arma::vec& m, double alpha) { //double gamma
 
@@ -365,7 +285,7 @@ arma::vec cdfit_cox_dh_one_lambda(const arma::mat& X, const arma::vec& d, String
       l2 = lambda * m[j] * (1 - alpha);
       // if (penalty == "MCP") b[j] = MCP(u, l1, l2, gamma, v);
       // if (penalty == "SCAD") b[j] = SCAD(u, l1, l2, gamma, v);
-      if (penalty == "lasso") b[j] = lasso(u, l1, l2, v);
+      b[j] = lasso(u, l1, l2, v);
 
       shift = b[j] - a[j];
       if (shift != 0) {
@@ -386,7 +306,7 @@ arma::vec cdfit_cox_dh_one_lambda(const arma::mat& X, const arma::vec& d, String
 
 
 // [[Rcpp::export]]
-arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d, String penalty,
+arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
                                      double lambda, const arma::vec& a,
                                      const arma::vec& m, double alpha) { //double gamma
   
@@ -432,7 +352,7 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d, Str
     l2 = lambda * m[j] * (1 - alpha);
     // if (penalty == "MCP") b[j] = MCP(u, l1, l2, gamma, v);
     // if (penalty == "SCAD") b[j] = SCAD(u, l1, l2, gamma, v);
-    if (penalty == "lasso") b[j] = lasso(u, l1, l2, v);
+    b[j] = lasso(u, l1, l2, v);
     
     shift = b[j] - a[j];
     if (shift != 0) {
@@ -450,7 +370,7 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d, Str
 
 
 // [[Rcpp::export]]
-arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty,
+arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y,
                           double alpha, double lambda, arma::vec beta0){
 
   // Order y by time
@@ -472,7 +392,7 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, String penalty
   arma::vec penalty_factor = arma::ones<arma::vec>(p);
   penalty_factor = penalty_factor.elem(ns);
   // perform coordinate descent
-  arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, penalty, lambda,
+  arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, lambda,
                                            beta0, penalty_factor, alpha);
 
   // Unstandardize coefficients
@@ -514,17 +434,13 @@ void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
 //' @export
 // [[Rcpp::export]]
 List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
-                            const arma::mat& H0, const arma::mat& W0,
-                            const arma::colvec& beta0, const arma::colvec& y,
-                            const arma::colvec& delta, double alpha,
-                            double lambda, double eta, double tol,
-                            int maxit, bool verbose, bool WtX, int norm_type,
-                            String penalty, bool init){
+                       const arma::colvec& y, const arma::colvec& delta,
+                       const arma::mat& W0, const arma::mat& H0, 
+                       const arma::colvec& beta0,  
+                       double alpha, double lambda, double eta, 
+                       double tol, int maxit, bool verbose, bool init){
   arma::mat H = H0;
   arma::mat W = W0;
-  arma::mat Xt = trans(X);
-  arma::mat Mt = trans(M);
-  
   arma::colvec beta = beta0;
   
   int N = H.n_cols;
@@ -545,21 +461,18 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     loss_prev = loss;
     
-    update_W_cpp(X,Xt,M,Mt,H,W,beta,y,delta,alpha,WtX,norm_type);
+    update_W_cpp(X, M, y, delta, W, H, beta, alpha);
     //Rcout << "W:\n" << W.rows(0,4) << "\n";
 
-    if(WtX){
-      beta = update_beta_cpp(trans(M % X) * W, s,penalty,eta,lambda,beta);
-    }else{
-      beta = update_beta_cpp(H.t(),s,penalty,eta,lambda,beta);
-    }
+    beta = update_beta_cpp(trans(M % X) * W, s, eta, lambda, beta);
+
     //Rcout << "beta:\n" << beta << "\n";
 
 
-    update_H_cpp(X,M,W,beta,H,y,delta,alpha,WtX);
+    update_H_cpp(X, M, y, delta, W, H);
 
     
-    l = calc_loss_cpp(X, M, W, H, beta, alpha, y, delta, lambda, eta, WtX);
+    l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta);
 
     loss = l["loss"];
     //Rcout << "loss: " << loss << "\n";

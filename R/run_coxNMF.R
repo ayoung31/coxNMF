@@ -1,8 +1,8 @@
 #' @export
-run_coxNMF = function(X, y, delta, k, alpha, lambda, eta, H0 = NULL, W0 = NULL, 
-                      beta0 = NULL, M = NULL, WtX = FALSE,
-                      verbose = FALSE, norm_type = 2, tol = 1e-6, maxit = 10000,
-                      penalty = 'lasso',...){
+run_coxNMF = function(X, y, delta, k, alpha, M = NULL, W0 = NULL, H0 = NULL,
+                      beta0 = NULL, lambda = 0, eta = 0, 
+                      tol = 1e-6, maxit = 3000, verbose = TRUE, 
+                      ninit = 30, imaxit = 100){
   # Add all error checking here. This will be the primary function
   
   if(is.null(M)){
@@ -12,17 +12,18 @@ run_coxNMF = function(X, y, delta, k, alpha, lambda, eta, H0 = NULL, W0 = NULL,
   # Initialize
   if(is.null(H0) | is.null(W0) | is.null(beta0)){
     print("initializing ...")
-    fit0 = init(X, M, y, delta, k, alpha, lambda, eta, WtX, norm_type, 
-                penalty, verbose, tol,...)
+    fit0 = init(X=X, M=M, y=y, delta=delta, k=k, 
+                alpha=alpha, lambda=lambda, eta=eta,
+                verbose=verbose, tol=tol, imaxit=imaxit, ninit=ninit)
     H0 = fit0$H0
     W0 = fit0$W0
     beta0 = fit0$beta0
   }
   
-  
   # Run the model
-  fit = optimize_loss_cpp(X, M, H0, W0, beta0, y, delta, alpha, 
-                          lambda, eta, tol, maxit, verbose, WtX, norm_type, penalty, FALSE)
+  fit = optimize_loss_cpp(X, M, y, delta, W0, H0, beta0, 
+                          alpha, lambda, eta, 
+                          tol, maxit, verbose, FALSE)
   
   return(fit)
 }

@@ -1,25 +1,21 @@
-
-run_cv = function(X,y,delta,k,nfold,alpha,lambda,eta,ninit,parallel=TRUE,ncore=NULL,replace=TRUE){
+run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, ngene=5000,
+                  ninit = 100, imaxit=30, maxit = 2000, tol = 1e-5, 
+                  parallel = TRUE, ncore = NULL, 
+                  replace = TRUE, save = TRUE, verbose=TRUE){
+  
+  X = as.matrix(X)
   
   if(parallel & is.null(ncore)){
     ncore = detectCores() - 1
   }
   
-  if(!replace){
-    exists = numeric()
-    i=1
-    for(j in 1:nrow(params)){
-      if(file.exists(params$file[j])){
-        exists[i] = j
-        i = i+1
-      }
-    }
-    params = params[setdiff(1:nrow(params),exists),]
-  }
+  params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, ninit=ninit, replace=replace, type="cv", nfold=nfold)
 
-  params = expand.grid(alpha=alpha,lambda=lambda,eta=eta,gamma=gamma,fold=1:nfold)
   
-  params$file=paste0('results/res_k=',k,'_alpha',params$alpha,'_lambda',params$lambda,'_eta',params$eta,'_gamma',params$gamma,'_fold',params$fold,'of',nfold,'_ninit',ninit,'.RData')
+  fold_info = get_folds(X,y,nfold,ngene)
+  Xtrain = fold_info$Xtrain
+  Xtest = fold_info$Xtest
+  folds = fold_info$folds
   
   if(parallel){
     cl = parallel::makeCluster(ncore,outfile="")
@@ -27,49 +23,54 @@ run_cv = function(X,y,delta,k,nfold,alpha,lambda,eta,ninit,parallel=TRUE,ncore=N
     parallel::clusterCall(cl, function(x) .libPaths(x), .libPaths())
   }
   
-  
-  foreach(pa=1:nrow(params), .inorder = FALSE, .errorhandling = 'pass', .combine = 'rbind') %dopar% {
+  metrics = 
+    foreach(pa=1:nrow(params), 
+            .inorder = FALSE, 
+            .errorhandling = 'pass', 
+            .combine = 'rbind') %dopar% 
+    {#begin foreach
     
     a = params$alpha[pa]
     l = params$lambda[pa]
     e = params$eta[pa]
-    g = params$gamma[pa]
     f = params$fold[pa]
     
     X = Xtrain[[f]]
-    y = sampInfo$Follow.up.days[folds!=f]
-    delta = -1*(as.numeric(sampInfo$Censored.1yes.0no[folds != f])-2)
+    y_curr = y[folds!=f]
+    delta_curr = delta[folds!=f]
     
-    n=ncol(X)
-    p=nrow(X)
-    
-    M = matrix(1,ncol=n,nrow=p)
-    
-    min_loss = Inf
-    for(init in 1:ninit){
-      #initialize parameters
-      set.seed(init)
-      H0 = matrix(runif(n*k,0,max(X)),nrow=k) # need to change matrix size here
-      W0 = matrix(runif(p*k,0,max(X)),nrow=p)
-      beta0 = rep(0,k)
-      
-      print(sprintf("pa: %d init: %d",pa,init))
-      fit_curr = coxNMF::run_coxNMF(X,y,delta,k,a, l,e,H0,W0,beta0,tol=1e-6,
-                                    maxit=15,verbose=TRUE,WtX=TRUE,gamma=g)
-      if(fit_curr$loss$loss < min_loss){
-        min_loss = fit_curr$loss$loss
-        best = fit_curr
-      }
+    fit_cox = run_coxNMF(X=X, y=y_curr, delta=delta_curr, k=k, 
+                         alpha=a, lambda=l, eta=e,
+                         tol=tol, maxit=maxit, verbose=verbose,
+                         ninit=ninit, imaxit=imaxit)
+    if(save){
+      save(fit_cox,file=params$file[pa])
     }
     
-    fit_cox = coxNMF::run_coxNMF(X,y,delta,k,a, l,e,best$H,best$W,best$beta,tol=1e-6,
-                                 maxit=3000,verbose=TRUE,WtX=TRUE)
-    save(fit_cox,file=params$file[pa])
+    #compute test set metrics: loss, sloss, recon error, cindex, bic
+    ytest=y[folds==f]
+    dtest=delta[folds==f]
+    W = fit_cox$W
+    H = fit_cox$beta
+    beta = fit_cox$beta
+    M = matrix(1,nrow=nrow(Xtest[[f]]),ncol=ncol(Xtest[[f]]))
+    c = cvwrapr::getCindex(t(Xtest[[f]]) %*% W %*% beta, Surv(ytest, dtest))
+    loss = calc_loss_cpp(Xtest[[f]], M, ytest, dtest, W, H, beta, a, l, e)
+    ol = loss$loss
+    sl = loss$surv_loss
+    nl = loss$nmf_loss
+    pen = loss$penalty
+    bic = -2*sl + k*log(ncol(Xtest[[f]]))
     
-  }
+    data.frame(alpha=a,lambda=l,eta=e,fold=f,loss=ol,sloss=sl,nloss=nl,pen=pen,bic=bic,c=c)
+    
+    
+  }#end foreach
   
   if(parallel){
     stopCluster(cl)
   }
+
+  return(metrics)
 
 }

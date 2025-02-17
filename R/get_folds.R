@@ -1,9 +1,28 @@
 #' @export
-get_folds = function(n,nfold){
-  rand = sample(n)
-  folds = list()
+get_folds = function(X,y,nfold,ngene,qnorm=FALSE){
+  
+  folds=caret::createFolds(y,k=nfold,list=FALSE)
+  
+  Xtrain = list()
+  Xtest = list()
   for(i in 1:nfold){
-    folds[[i]] = rand[rand %% nfold + 1 == i]
-  }
-  return(folds)
+    
+    train_data = gene_filter(X[,folds!=i],ngene)
+    
+    # reference_quantiles=rowMeans(apply(train_data,2,sort))
+    # train_data_normalized = normalize.quantiles(train_data,keep.names = TRUE)
+    # subset each testing fold to genes kept in training fold
+    test_data = X[rownames(X) %in% rownames(train_data),folds==i]
+    # test_data_normalized = normalize.quantiles.use.target(test_data,target = reference_quantiles)
+    
+    if(qnorm){
+      # Xtrain[[i]] = train_data_normalized
+      # Xtest[[i]] = test_data_normalized
+    }else{
+      Xtrain[[i]] = train_data
+      Xtest[[i]] = test_data
+    }
+  }#end for loop
+  
+  return(list(Xtrain=Xtrain,Xtest=Xtest,folds=folds))
 }
