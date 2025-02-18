@@ -1,3 +1,4 @@
+#' @export
 run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
                     ninit = 100, imaxit = 30, maxit = 3000, tol = 1e-5, 
                     parallel = TRUE, ncore = NULL, 
