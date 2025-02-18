@@ -1,7 +1,7 @@
-run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, ngene=5000,
-                  ninit = 100, imaxit=30, maxit = 2000, tol = 1e-5, 
+run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, fold_info,
+                  ninit = 100, imaxit=30, maxit = 3000, tol = 1e-5, 
                   parallel = TRUE, ncore = NULL, 
-                  replace = TRUE, save = TRUE, verbose=TRUE){
+                  replace = TRUE, save = TRUE, verbose=TRUE, prefix){
   
   X = as.matrix(X)
   
@@ -9,10 +9,10 @@ run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, ngene=5000,
     ncore = detectCores() - 1
   }
   
-  params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, ninit=ninit, replace=replace, type="cv", nfold=nfold)
-
+  params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, ninit=ninit, 
+                          replace=replace, type="cv", nfold=nfold, prefix = prefix,
+                          ngene = ngene, maxit=maxit, tol=tol, imaxit=imaxit)
   
-  fold_info = get_folds(X,y,nfold,ngene)
   Xtrain = fold_info$Xtrain
   Xtest = fold_info$Xtest
   folds = fold_info$folds
@@ -27,7 +27,8 @@ run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, ngene=5000,
     foreach(pa=1:nrow(params), 
             .inorder = FALSE, 
             .errorhandling = 'pass', 
-            .combine = 'rbind') %dopar% 
+            .combine = 'rbind',
+            .packages = c("coxNMF")) %dopar% 
     {#begin foreach
     
     a = params$alpha[pa]

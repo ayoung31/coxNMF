@@ -19,8 +19,8 @@ get_folds = function(X,y,nfold,ngene,qnorm=FALSE){
       # Xtrain[[i]] = train_data_normalized
       # Xtest[[i]] = test_data_normalized
     }else{
-      Xtrain[[i]] = train_data
-      Xtest[[i]] = test_data
+      Xtrain[[i]] = as.matrix(train_data)
+      Xtest[[i]] = as.matrix(test_data)
     }
   }#end for loop
   
