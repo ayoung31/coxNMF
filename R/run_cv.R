@@ -53,7 +53,7 @@ run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, fold_info,
     ytest=y[folds==f]
     dtest=delta[folds==f]
     W = fit_cox$W
-    H = fit_cox$beta
+    H = fit_cox$H
     beta = fit_cox$beta
     M = matrix(1,nrow=nrow(Xtest[[f]]),ncol=ncol(Xtest[[f]]))
     c = cvwrapr::getCindex(t(Xtest[[f]]) %*% W %*% beta, Surv(ytest, dtest))
