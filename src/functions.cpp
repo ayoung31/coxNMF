@@ -449,15 +449,15 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   
   double loss = 0.000001;
   double eps = 1;
-  int it = 0;
+  int it = -1;
   double loss_prev;
   List l;
   arma::mat s = arma::join_horiz(y,delta);
 
   arma::vec lossit = arma::zeros<arma::vec>(maxit);
   
-  while(eps > tol && it <= maxit){
-    
+  while(eps > tol && it < maxit){
+    it = it + 1;
     
     loss_prev = loss;
     
@@ -497,7 +497,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     lossit[it] = loss;
 
-    it = it + 1;
+    
     if(verbose){
       Rprintf("iter: %d eps: %.8f loss: %.8f\n",it,eps,loss);
     }
@@ -506,7 +506,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     }
 
   }
-
+  
   List L = List::create(
     Named("W") = W,
     Named("H") = H,

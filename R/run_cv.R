@@ -29,7 +29,7 @@ run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, fold_info,
             .inorder = FALSE, 
             .errorhandling = 'pass', 
             .combine = 'rbind',
-            .packages = c("coxNMF","survival","cvwrapr")) %dopar% 
+            .packages = c("survival","cvwrapr")) %dopar% 
     {#begin foreach
     
     a = params$alpha[pa]
@@ -57,14 +57,12 @@ run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, fold_info,
     beta = fit_cox$beta
     M = matrix(1,nrow=nrow(Xtest[[f]]),ncol=ncol(Xtest[[f]]))
     c = cvwrapr::getCindex(t(Xtest[[f]]) %*% W %*% beta, Surv(ytest, dtest))
-    loss = calc_loss_cpp(Xtest[[f]], M, ytest, dtest, W, H, beta, a, l, e)
-    ol = loss$loss
-    sl = loss$surv_loss
-    nl = loss$nmf_loss
-    pen = loss$penalty
+    sl = calc_surv_loss(Xtest[[f]], M, ytest, dtest, W, beta)
     bic = -2*sl + k*log(ncol(Xtest[[f]]))
     
-    data.frame(alpha=a,lambda=l,eta=e,fold=f,loss=ol,sloss=sl,nloss=nl,pen=pen,bic=bic,c=c)
+    converged=fit_cox$iter < maxit
+    
+    data.frame(k=k,alpha=a,lambda=l,eta=e,fold=f,sloss=sl,bic=bic,c=c, converged=converged)
     
     
   }#end foreach
