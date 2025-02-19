@@ -29,7 +29,7 @@ run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, fold_info,
             .inorder = FALSE, 
             .errorhandling = 'pass', 
             .combine = 'rbind',
-            .packages = c("coxNMF")) %dopar% 
+            .packages = c("coxNMF","survival","cvwrapr")) %dopar% 
     {#begin foreach
     
     a = params$alpha[pa]
