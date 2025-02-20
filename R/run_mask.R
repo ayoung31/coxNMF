@@ -1,7 +1,7 @@
 #' @export
 run_mask = function(X, y, delta, k, alpha, lambda=0, eta=0, perc_mask, nmask, 
                     ninit=100, imaxit=30, maxit=3000, tol=1e-5,
-                    parallel=TRUE,ncore=NULL,replace=TRUE,
+                    parallel=TRUE,ncore=NULL,replace=FALSE,
                     save=TRUE, verbose=TRUE, prefix){
   
   X=as.matrix(X)
@@ -33,13 +33,18 @@ run_mask = function(X, y, delta, k, alpha, lambda=0, eta=0, perc_mask, nmask,
     k = params$k[pa]
     m = params$mask[pa]
     
-    set.seed(m)
-    M = get_mask(perc_mask,n,p)
+    if(replace | !file.exists(params$file[pa])){
+      set.seed(m)
+      M = get_mask(perc_mask,n,p)
+      
+      fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, M=M,
+                           alpha=a, lambda=l, eta=e, 
+                           tol=tol, maxit=maxit, verbose=verbose,
+                           ninit=ninit, imaxit=imaxit)
+    }else{
+      load(params$file[pa])
+    }
     
-    fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, M=M,
-                         alpha=a, lambda=l, eta=e, 
-                         tol=tol, maxit=maxit, verbose=verbose,
-                         ninit=ninit, imaxit=imaxit)
     
     if(save){
       save(M,fit_cox,file=params$file[pa])
@@ -47,6 +52,7 @@ run_mask = function(X, y, delta, k, alpha, lambda=0, eta=0, perc_mask, nmask,
     
     #compute masked recon error
     m_err = sum((1-M)*(X-fit_cox$W%*%fit_cox$H)^2)
+    converged=fit_cox$iter < maxit
     
     data.frame(k=k,alpha=a,lambda=l,eta=e,mask=m,mask_err=m_err)
     

@@ -1,4 +1,4 @@
-set_param_grid = function(k, alpha, lambda, eta, ninit, replace, type, prefix,
+set_param_grid = function(k, alpha, lambda, eta, ninit, type, prefix,
                           ngene, maxit, tol, imaxit,
                           nfold=NULL, nmask=NULL, perc_mask=NULL){
   
@@ -31,17 +31,17 @@ set_param_grid = function(k, alpha, lambda, eta, ninit, replace, type, prefix,
                        '_imaxit',imaxit,'_tol',tol,'_maxit',maxit,'.RData')
   }
   
-  if(!replace){
-    exists = numeric()
-    i=1
-    for(j in 1:nrow(params)){
-      if(file.exists(params$file[j])){
-        exists[i] = j
-        i = i+1
-      }
-    }
-    params = params[setdiff(1:nrow(params),exists),]
-  }
+  # if(!replace){
+  #   exists = numeric()
+  #   i=1
+  #   for(j in 1:nrow(params)){
+  #     if(file.exists(params$file[j])){
+  #       exists[i] = j
+  #       i = i+1
+  #     }
+  #   }
+  #   params = params[setdiff(1:nrow(params),exists),]
+  # }
   
   return(params)
 }

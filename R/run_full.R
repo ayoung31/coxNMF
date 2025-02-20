@@ -1,8 +1,8 @@
 #' @export
 run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
                     ninit = 100, imaxit = 30, maxit = 3000, tol = 1e-5, 
-                    parallel = TRUE, ncore = NULL, 
-                    replace = TRUE, save = TRUE, verbose=TRUE, prefix){
+                    parallel = TRUE, ncore = NULL, replace = FALSE, 
+                    save = TRUE, verbose=TRUE, prefix){
   
   X=as.matrix(X)
   
@@ -20,25 +20,50 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     parallel::clusterCall(cl, function(x) .libPaths(x), .libPaths())
   }
   
-  foreach(pa=1:nrow(params), .inorder = FALSE, .errorhandling = 'pass', .combine = 'rbind', .packages = c("coxNMF")) %dopar% {
+  metrics = 
+    foreach(pa=1:nrow(params), .inorder = FALSE, .errorhandling = 'pass', 
+            .combine = 'rbind', .packages = c("coxNMF","survival","cvwrapr")) %dopar% {
     
     a = params$alpha[pa]
     l = params$lambda[pa]
     e = params$eta[pa]
     
-    fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, 
-                         alpha=a, lambda=l, eta=e, 
-                         tol=tol, maxit=maxit, verbose=verbose,
-                         ninit=ninit, imaxit=imaxit)
+    if(replace | !file.exists(params$file[pa])){
+      fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, 
+                           alpha=a, lambda=l, eta=e, 
+                           tol=tol, maxit=maxit, verbose=verbose,
+                           ninit=ninit, imaxit=imaxit)
+    }else{
+      load(params$file[pa])
+    }
+    
     
     save(fit_cox,file=params$file[pa])
     
     #primary metrics to output
+    M=matrix(1,nrow=nrow(X),ncol=ncol(X))
+    W = fit_cox$W
+    H = fit_cox$H
+    beta = fit_cox$beta
+    c = cvwrapr::getCindex(t(X) %*% W %*% beta, Surv(y, delta))
+    loss = fit_cox$loss
+    ol = loss$loss
+    sl = loss$surv_loss
+    nl = loss$nmf_loss
+    pen = loss$penalty
+    bic = -2*sl + k*log(ncol(X))
+    converged=fit_cox$iter < maxit
+    
+    data.frame(k=k,alpha=alpha,lambda=lambda,eta=eta,c=c,loss=ol,sloss=sl,
+               nloss=nl,pen=pen,bic=bic,converged=converged)
+    
     
   }#end foreach
   
   if(parallel){
     stopCluster(cl)
   }
+  
+  return(metrics)
   
 }

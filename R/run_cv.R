@@ -1,8 +1,8 @@
 #' @export
 run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, fold_info,
                   ninit = 100, imaxit=30, maxit = 3000, tol = 1e-5, 
-                  parallel = TRUE, ncore = NULL, 
-                  replace = TRUE, save = TRUE, verbose=TRUE, prefix){
+                  parallel = TRUE, ncore = NULL, replace = FALSE, 
+                  save = TRUE, verbose=TRUE, prefix){
   
   X = as.matrix(X)
   
@@ -41,10 +41,15 @@ run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, fold_info,
     y_curr = y[folds!=f]
     delta_curr = delta[folds!=f]
     
-    fit_cox = run_coxNMF(X=X, y=y_curr, delta=delta_curr, k=k, 
-                         alpha=a, lambda=l, eta=e,
-                         tol=tol, maxit=maxit, verbose=verbose,
-                         ninit=ninit, imaxit=imaxit)
+    if(replace | !file.exists(params$file[pa])){
+      fit_cox = run_coxNMF(X=X, y=y_curr, delta=delta_curr, k=k, 
+                           alpha=a, lambda=l, eta=e,
+                           tol=tol, maxit=maxit, verbose=verbose,
+                           ninit=ninit, imaxit=imaxit)
+    }else{
+      load(params$file[pa])
+    }
+    
     if(save){
       save(fit_cox,file=params$file[pa])
     }
