@@ -11,7 +11,7 @@ run_cv = function(X, y, delta, k, nfold, alpha, lambda = 0, eta = 0, fold_info,
   }
   
   params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, ninit=ninit, 
-                          replace=replace, type="cv", nfold=nfold, prefix = prefix,
+                          type="cv", nfold=nfold, prefix = prefix,
                           ngene = ngene, maxit=maxit, tol=tol, imaxit=imaxit)
   
   Xtrain = fold_info$Xtrain

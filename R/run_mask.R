@@ -11,7 +11,7 @@ run_mask = function(X, y, delta, k, alpha, lambda=0, eta=0, perc_mask, nmask,
   }
   
   params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, ninit=ninit, 
-                          replace=replace, type="mask", perc_mask=perc_mask, nmask=nmask, 
+                          type="mask", perc_mask=perc_mask, nmask=nmask, 
                           prefix=prefix, ngene = ngene, maxit=maxit, tol=tol, imaxit=imaxit)
   
   n=ncol(X)

@@ -11,7 +11,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
   }
   
   params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, ninit=ninit, 
-                          replace=replace, type="full", prefix=prefix,
+                          type="full", prefix=prefix,
                           ngene = ngene, maxit=maxit, tol=tol, imaxit=imaxit)
   
   if(parallel){
