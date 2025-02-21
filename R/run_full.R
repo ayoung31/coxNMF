@@ -61,7 +61,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     converged=fit_cox$iter < maxit
     
     data.frame(k=k,alpha=a,lambda=l,eta=e,c=c,loss=ol,sloss=sl,
-               nloss=nl,pen=pen,bic=bic,converged=converged)
+               nloss=nl,pen=pen,bic=bic,converged=converged,niter=fit_cox$iter)
     
     
   }#end foreach

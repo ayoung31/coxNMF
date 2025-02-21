@@ -6,6 +6,7 @@ init = function(X, M, y, delta, k, alpha, lambda, eta,
   n = ncol(X)
   loss_best = Inf
   for(i in 1:ninit){
+    set.seed(i)
     H0 = matrix(runif(n*k,0,max(X)),nrow=k)
     W0 = matrix(runif(p*k,0,max(X)),nrow=p)
     #beta0 = runif(k,-1,1)
