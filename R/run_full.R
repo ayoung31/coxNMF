@@ -6,6 +6,10 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
   
   X=as.matrix(X)
   
+  if(ncore==1){
+    parallel=FALSE
+  }
+  
   if(parallel & is.null(ncore)){
     ncore = detectCores() - 1
   }
@@ -27,6 +31,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     a = params$alpha[pa]
     l = params$lambda[pa]
     e = params$eta[pa]
+    k = params$k[pa]
     
     if(replace | !file.exists(params$file[pa])){
       fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, 
@@ -37,9 +42,10 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
       load(params$file[pa])
     }
     
-    
-    save(fit_cox,file=params$file[pa])
-    
+    if(save){
+      save(fit_cox,file=params$file[pa])
+    }
+
     #primary metrics to output
     M=matrix(1,nrow=nrow(X),ncol=ncol(X))
     W = fit_cox$W
@@ -54,7 +60,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     bic = -2*sl + k*log(ncol(X))
     converged=fit_cox$iter < maxit
     
-    data.frame(k=k,alpha=alpha,lambda=lambda,eta=eta,c=c,loss=ol,sloss=sl,
+    data.frame(k=k,alpha=a,lambda=l,eta=e,c=c,loss=ol,sloss=sl,
                nloss=nl,pen=pen,bic=bic,converged=converged)
     
     
