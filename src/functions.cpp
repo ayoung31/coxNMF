@@ -43,9 +43,10 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M,
   arma::mat LP = diagmat(lp);
   arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
   
-  
-  W = (W / ((M % (W*H)) * Ht)) %
-    arma::clamp(((M % X) * Ht) + (alpha * s / (2 * (1-alpha))) * trans(l),0,arma::datum::inf);
+  arma::mat inside = arma::clamp(((M % X) * Ht) + (alpha * s / (2 * (1-alpha))) * trans(l),0,arma::datum::inf);
+  arma::mat denom = (M % (W*H)) * Ht;
+  W = (W / denom) % inside;
+    
   W.elem( find_nonfinite(W) ).zeros();
   
   return;
@@ -405,28 +406,11 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y,
 
 //' @export
 // [[Rcpp::export]]
-void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type,
-                 bool WtX){
+void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta){
   
-  
-  
-  if(WtX){
-    arma::rowvec col_sum = sum(H, 0);
-    H.each_row() /= col_sum;
-  }else{
-    arma::rowvec col_sum = sum(W, 0);
-    W.each_row() /= col_sum;
-  }
-  
-  
-    // arma::rowvec col_sums = sum(W, 0);
-    // W.each_row() /= col_sums;
-    // H.each_col() %= col_sums.t();
-    // beta /= col_sums.t();
-    
-  // arma::colvec row_sums = sum(W,1);
-  // W.each_col() /= row_sums;
-  // H.each_row() 
+    arma::colvec row_sum = sum(H, 1);
+    H.each_col() /= row_sum;
+
   
   return;
 }
@@ -470,7 +454,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
 
 
     update_H_cpp(X, M, y, delta, W, H);
-
+    standardize(W,H,beta);
     
     l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta);
 
@@ -488,8 +472,12 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // Rcout << "nmf loss\n" << nmfloss << "\n";
     // Rcout << "penalty\n" << penloss << "\n";
     // 
-    // Rcout << "W\n" << W.rows(0,4) << "\n";
-    // Rcout << "H\n" << H.cols(0,4) << "\n";
+    if(it>2000){
+      Rcout << "W\n" << W.rows(0,8) << "\n";
+      Rcout << "H\n" << H.cols(0,8) << "\n";
+    }
+    
+    // 
     // Rcout << "beta\n" << beta << "\n";
     // Rcout << "lp\n" << lptemp.rows(0,4) << "\n";
 

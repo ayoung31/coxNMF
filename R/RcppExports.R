@@ -36,8 +36,8 @@ update_beta_cpp <- function(X, y, alpha, lambda, beta0) {
 }
 
 #' @export
-standardize <- function(W, H, beta, norm_type, WtX) {
-    invisible(.Call(`_coxNMF_standardize`, W, H, beta, norm_type, WtX))
+standardize <- function(W, H, beta) {
+    invisible(.Call(`_coxNMF_standardize`, W, H, beta))
 }
 
 #' @export

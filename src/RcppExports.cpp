@@ -150,16 +150,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // standardize
-void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta, int norm_type, bool WtX);
-RcppExport SEXP _coxNMF_standardize(SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP norm_typeSEXP, SEXP WtXSEXP) {
+void standardize(arma::mat& W, arma::mat& H, arma::colvec& beta);
+RcppExport SEXP _coxNMF_standardize(SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat& >::type W(WSEXP);
     Rcpp::traits::input_parameter< arma::mat& >::type H(HSEXP);
     Rcpp::traits::input_parameter< arma::colvec& >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< int >::type norm_type(norm_typeSEXP);
-    Rcpp::traits::input_parameter< bool >::type WtX(WtXSEXP);
-    standardize(W, H, beta, norm_type, WtX);
+    standardize(W, H, beta);
     return R_NilValue;
 END_RCPP
 }
@@ -197,7 +195,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coxNMF_cdfit_cox_dh_one_lambda", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda, 7},
     {"_coxNMF_cdfit_cox_dh_one_lambda_it", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda_it, 6},
     {"_coxNMF_update_beta_cpp", (DL_FUNC) &_coxNMF_update_beta_cpp, 5},
-    {"_coxNMF_standardize", (DL_FUNC) &_coxNMF_standardize, 5},
+    {"_coxNMF_standardize", (DL_FUNC) &_coxNMF_standardize, 3},
     {"_coxNMF_optimize_loss_cpp", (DL_FUNC) &_coxNMF_optimize_loss_cpp, 14},
     {NULL, NULL, 0}
 };

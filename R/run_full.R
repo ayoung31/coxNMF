@@ -33,7 +33,11 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     e = params$eta[pa]
     k = params$k[pa]
     
+    
+    
     if(replace | !file.exists(params$file[pa])){
+      print(sprintf('alpha=%f, lambda=%f, eta=%f, k=%d\n',a,l,e,k))
+      print("running...")
       fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, 
                            alpha=a, lambda=l, eta=e, 
                            tol=tol, maxit=maxit, verbose=verbose,
@@ -42,6 +46,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
         save(fit_cox,file=params$file[pa])
       }
     }else{
+      #print("loading...")
       load(params$file[pa])
     }
     
