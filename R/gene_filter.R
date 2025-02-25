@@ -1,3 +1,4 @@
+#' @export
 gene_filter = function(X, ngene=5000){
 
   means = apply(X,1,mean) # average expression for each genes

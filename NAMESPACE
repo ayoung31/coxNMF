@@ -2,6 +2,7 @@
 
 export(calc_loss_cpp)
 export(calc_surv_loss)
+export(gene_filter)
 export(get_folds)
 export(get_mask)
 export(init)
