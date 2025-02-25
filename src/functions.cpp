@@ -472,10 +472,10 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // Rcout << "nmf loss\n" << nmfloss << "\n";
     // Rcout << "penalty\n" << penloss << "\n";
     // 
-    if(it>2000){
-      Rcout << "W\n" << W.rows(0,8) << "\n";
-      Rcout << "H\n" << H.cols(0,8) << "\n";
-    }
+    // if(it>2000){
+    //   Rcout << "W\n" << W.rows(0,8) << "\n";
+    //   Rcout << "H\n" << H.cols(0,8) << "\n";
+    // }
     
     // 
     // Rcout << "beta\n" << beta << "\n";
