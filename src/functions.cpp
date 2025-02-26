@@ -45,9 +45,11 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M,
   
   arma::mat inside = arma::clamp(((M % X) * Ht) + (alpha * s / (2 * (1-alpha))) * trans(l),0,arma::datum::inf);
   arma::mat denom = (M % (W*H)) * Ht;
-  W = (W / denom) % inside;
-    
-  W.elem( find_nonfinite(W) ).zeros();
+  
+  //only update nonzero elements of W
+  arma::uvec indices = arma::find(W);
+  
+  W.elem(indices) = (W.elem(indices) / denom.elem(indices)) % inside.elem(indices);
   
   return;
 }
@@ -309,7 +311,7 @@ arma::vec cdfit_cox_dh_one_lambda(const arma::mat& X, const arma::vec& d,
 // [[Rcpp::export]]
 arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
                                      double lambda, const arma::vec& a,
-                                     const arma::vec& m, double alpha) { //double gamma
+                                     const arma::vec& m, double alpha, int it) { //double gamma
   
   int n = X.n_rows;
   int p = X.n_cols;
@@ -322,25 +324,43 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
   arma::vec h = arma::zeros<arma::vec>(n);
   arma::vec eta = X * a;
   
+  //Rcout << "eta:\n" << eta << "\n";
+  
   double xwr, xwx, u, v, l1, l2, shift, si, s, nullDev;
   
   rsk[n-1] = 1;
   for (int i = n - 2; i >= 0; i--) rsk[i] = rsk[i + 1] + 1;
+  
   nullDev = 0;
   for (int i = 0; i < n; i++) nullDev -= d[i] * std::log(rsk[i]);
+
   
   haz = arma::exp(eta);
+
+  //Rcout << "haz:\n" << haz << "\n";
+  
   rsk[n-1] = haz[n-1];
   for (int i = n - 2; i >= 0; i--) rsk[i] = rsk[i + 1] + haz[i];
+
+  //Rcout << "rsk:\n" << rsk << "\n";
+    
   for (int i = 0; i < n; i++) Loss += d[i] * eta[i] - d[i] * std::log(rsk[i]);
-  
+
   h[0] = d[0] / rsk[0];
   for (int i = 1; i < n; i++) h[i] = h[i - 1] + d[i] / rsk[i];
+
+  //Rcout << "h:\n" << h << "\n";
+    
   for (int i = 0; i < n; i++) {
     h[i] *= haz[i];
     s = d[i] - h[i];
     r[i] = h[i] == 0 ? 0 : s / h[i];
   }
+
+  //Rcout << "h:\n" << h << "\n";
+  //Rcout << "s:\n" << s << "\n";
+  //Rcout << "r:\n" << r << "\n";
+  
   
   
   for (int j = 0; j < p; j++) {
@@ -372,9 +392,10 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
 
 // [[Rcpp::export]]
 arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y,
-                          double alpha, double lambda, arma::vec beta0){
+                          double alpha, double lambda, arma::vec beta0, int it){
 
   // Order y by time
+  //Rcout << "test a";
   arma::uvec tOrder = arma::sort_index(y.col(0));
   arma::vec yy = arma::conv_to<arma::vec>::from(y.col(0)).elem(tOrder);
   arma::vec Delta = arma::conv_to<arma::vec>::from(y.col(1)).elem(tOrder);
@@ -384,21 +405,30 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y,
   arma::rowvec sdX = arma::stddev(XX, 1, 0); // using unbiased estimator
   //Rcout << sdX << "\n";
   XX.each_row() -= meanX;
-  XX.each_row() /= sdX;
+  //XX.each_row() /= sdX;
+  arma::uvec temp = arma::find_nan(XX);
+  //Rcout << "number of nan in XX: " << temp.n_elem << "\n";
   //Rcout << XX.rows(0,4) << "\n";
   arma::uvec ns = arma::find(sdX > .000001);
+  //Rcout << "test b";
+  arma::colvec sdXt = sdX.t();
+  sdXt = sdXt.elem(ns);
   XX = XX.cols(ns);
+  XX.each_row() /= sdXt.t();
+  beta0=beta0.elem(ns);
   int p = XX.n_cols;
-
+  //Rcout << "test c";
   arma::vec penalty_factor = arma::ones<arma::vec>(p);
-  penalty_factor = penalty_factor.elem(ns);
+  
+  //Rcout << "XX"<< XX * beta0 << "\n";
+  
   // perform coordinate descent
   arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, lambda,
-                                           beta0, penalty_factor, alpha);
-
+                                           beta0, penalty_factor, alpha, it);
+  //Rcout << "test d";
   // Unstandardize coefficients
   arma::vec beta = arma::zeros<arma::vec>(X.n_cols);
-  arma::vec bb = b / sdX.t();
+  arma::vec bb = b / sdXt;
   beta.elem(ns) = bb;
 
   return beta;
@@ -446,15 +476,20 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     loss_prev = loss;
     
     update_W_cpp(X, M, y, delta, W, H, beta, alpha);
-    //Rcout << "W:\n" << W.rows(0,4) << "\n";
+    //Rcout << "W:\n" << W.rows(0,8) << "\n";
+    arma::uvec temp = arma::find_nan(W);
+    //Rcout << "number of nan:" << temp.n_elem << "\n";
+    //Rcout << "test1";
 
-    beta = update_beta_cpp(trans(M % X) * W, s, eta, lambda, beta);
-
+    beta = update_beta_cpp(trans(M % X) * W, s, eta, lambda, beta, it);
+    //Rcout << "test2";
     //Rcout << "beta:\n" << beta << "\n";
 
 
     update_H_cpp(X, M, y, delta, W, H);
+    //Rcout << "test3";
     standardize(W,H,beta);
+    ////Rcout << "test4\n";
     
     l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta);
 
@@ -472,9 +507,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // Rcout << "nmf loss\n" << nmfloss << "\n";
     // Rcout << "penalty\n" << penloss << "\n";
     // 
-    // if(it>2000){
-    //   Rcout << "W\n" << W.rows(0,8) << "\n";
-    //   Rcout << "H\n" << H.cols(0,8) << "\n";
+    // if(it>1600){
+    //Rcout << "H\n" << H.cols(0,8) << "\n";
     // }
     
     // 

@@ -27,12 +27,12 @@ cdfit_cox_dh_one_lambda <- function(X, d, lambda, eps, max_iter, m, alpha) {
     .Call(`_coxNMF_cdfit_cox_dh_one_lambda`, X, d, lambda, eps, max_iter, m, alpha)
 }
 
-cdfit_cox_dh_one_lambda_it <- function(X, d, lambda, a, m, alpha) {
-    .Call(`_coxNMF_cdfit_cox_dh_one_lambda_it`, X, d, lambda, a, m, alpha)
+cdfit_cox_dh_one_lambda_it <- function(X, d, lambda, a, m, alpha, it) {
+    .Call(`_coxNMF_cdfit_cox_dh_one_lambda_it`, X, d, lambda, a, m, alpha, it)
 }
 
-update_beta_cpp <- function(X, y, alpha, lambda, beta0) {
-    .Call(`_coxNMF_update_beta_cpp`, X, y, alpha, lambda, beta0)
+update_beta_cpp <- function(X, y, alpha, lambda, beta0, it) {
+    .Call(`_coxNMF_update_beta_cpp`, X, y, alpha, lambda, beta0, it)
 }
 
 #' @export

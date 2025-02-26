@@ -25,7 +25,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
   }
   
   metrics = 
-    foreach(pa=1:nrow(params), .inorder = FALSE, .errorhandling = 'pass', 
+    foreach(pa=1:nrow(params), .inorder = FALSE, .errorhandling = 'remove', 
             .combine = 'rbind', .packages = c("coxNMF","survival","cvwrapr")) %dopar% {
     
     a = params$alpha[pa]
