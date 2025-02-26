@@ -23,7 +23,7 @@ run_mask = function(X, y, delta, k, alpha, lambda=0, eta=0, perc_mask, nmask,
     parallel::clusterCall(cl, function(x) .libPaths(x), .libPaths())
   }
 
-  metrics = foreach(pa=1:nrow(params), .inorder = FALSE, .errorhandling = 'pass', 
+  metrics = foreach(pa=1:nrow(params), .inorder = FALSE, .errorhandling = 'remove', 
                     .combine = 'rbind', .packages=c('coxNMF')) %dopar% {
     
     
