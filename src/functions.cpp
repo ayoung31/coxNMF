@@ -10,8 +10,17 @@ void update_H_cpp(const arma::mat& X, const arma::mat& M,
                   const arma::colvec& y, const arma::colvec& delta, 
                   const arma::mat& W, arma::mat& H) {
   
+  
+  
   arma::mat Wt = W.t();
-  H = H % (Wt * (M % X)) / (Wt * (M % (W * H)));
+  arma::mat denom = Wt * (M % (W * H));
+  //Rcout << "denom: \n" << denom << "\n";
+  arma::mat num = H % (Wt * (M % X));
+  //Rcout << "num: \n" << num << "\n";
+  
+  arma::uvec indices = arma::find(num>0 && denom>0);
+  
+  H.elem(indices) = num.elem(indices) / denom.elem(indices);
   
   return;
 }
@@ -311,7 +320,8 @@ arma::vec cdfit_cox_dh_one_lambda(const arma::mat& X, const arma::vec& d,
 // [[Rcpp::export]]
 arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
                                      double lambda, const arma::vec& a,
-                                     const arma::vec& m, double alpha, int it) { //double gamma
+                                     const arma::vec& m, double alpha, int it,
+                                     bool& flag_nan) { //double gamma
   
   int n = X.n_rows;
   int p = X.n_cols;
@@ -323,8 +333,16 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
   arma::vec r = arma::zeros<arma::vec>(n);
   arma::vec h = arma::zeros<arma::vec>(n);
   arma::vec eta = X * a;
+  haz = arma::exp(eta);
   
-  //Rcout << "eta:\n" << eta << "\n";
+  //Rcout << "eta:\n" << eta.t() << "\n";
+  //Rcout << "haz:\n" << haz.t() << "\n";
+  
+  if(!haz.is_finite()){
+    flag_nan = TRUE;
+    return(a);
+  }
+  
   
   double xwr, xwx, u, v, l1, l2, shift, si, s, nullDev;
   
@@ -335,21 +353,20 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
   for (int i = 0; i < n; i++) nullDev -= d[i] * std::log(rsk[i]);
 
   
-  haz = arma::exp(eta);
-
-  //Rcout << "haz:\n" << haz << "\n";
   
   rsk[n-1] = haz[n-1];
   for (int i = n - 2; i >= 0; i--) rsk[i] = rsk[i + 1] + haz[i];
 
-  //Rcout << "rsk:\n" << rsk << "\n";
+  //Rcout << "rsk:\n" << rsk.t() << "\n";
     
   for (int i = 0; i < n; i++) Loss += d[i] * eta[i] - d[i] * std::log(rsk[i]);
+  
+  //Rcout << "loss: " << Loss << "\n";
 
   h[0] = d[0] / rsk[0];
   for (int i = 1; i < n; i++) h[i] = h[i - 1] + d[i] / rsk[i];
 
-  //Rcout << "h:\n" << h << "\n";
+  //Rcout << "h:\n" << h.t() << "\n";
     
   for (int i = 0; i < n; i++) {
     h[i] *= haz[i];
@@ -357,23 +374,29 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
     r[i] = h[i] == 0 ? 0 : s / h[i];
   }
 
-  //Rcout << "h:\n" << h << "\n";
-  //Rcout << "s:\n" << s << "\n";
-  //Rcout << "r:\n" << r << "\n";
+  //Rcout << "h:\n" << h.t() << "\n";
+  //Rcout << "r:\n" << r.t() << "\n";
   
   
   
   for (int j = 0; j < p; j++) {
     xwr = arma::accu(X.col(j) % r % h);
+    //Rcout << "xwr " << j << ": " << xwr << "\n";
     xwx = arma::accu(h % arma::square(X.col(j)));
+    //Rcout << "xwx " << j << ": " << xwx << "\n";
     u = xwr / n + (xwx / n) * a[j];
     v = xwx / n;
+    //Rcout << "u " << j << ": " << u << "\n";
+    //Rcout << "v " << j << ": " << v << "\n";
     
     l1 = lambda * m[j] * alpha;
     l2 = lambda * m[j] * (1 - alpha);
+    //Rcout << "l1 " << j << ": " << l1 << "\n";
+    //Rcout << "l2 " << j << ": " << l2 << "\n";
     // if (penalty == "MCP") b[j] = MCP(u, l1, l2, gamma, v);
     // if (penalty == "SCAD") b[j] = SCAD(u, l1, l2, gamma, v);
     b[j] = lasso(u, l1, l2, v);
+    //Rcout << "b " << j << ": " << b << "\n";
     
     shift = b[j] - a[j];
     if (shift != 0) {
@@ -392,7 +415,8 @@ arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d,
 
 // [[Rcpp::export]]
 arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y,
-                          double alpha, double lambda, arma::vec beta0, int it){
+                          double alpha, double lambda, arma::vec beta0, int it,
+                          bool& flag_nan){
 
   // Order y by time
   //Rcout << "test a";
@@ -424,12 +448,13 @@ arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y,
   
   // perform coordinate descent
   arma::vec b = cdfit_cox_dh_one_lambda_it(XX, Delta, lambda,
-                                           beta0, penalty_factor, alpha, it);
+                                           beta0, penalty_factor, alpha, it, flag_nan);
   //Rcout << "test d";
   // Unstandardize coefficients
   arma::vec beta = arma::zeros<arma::vec>(X.n_cols);
   arma::vec bb = b / sdXt;
   beta.elem(ns) = bb;
+
 
   return beta;
 }
@@ -467,6 +492,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   double loss_prev;
   List l;
   arma::mat s = arma::join_horiz(y,delta);
+  arma::mat W_prev;
+  bool flag_nan=FALSE;
 
   arma::vec lossit = arma::zeros<arma::vec>(maxit);
   
@@ -475,18 +502,30 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     loss_prev = loss;
     
+    W_prev=W;
+    
     update_W_cpp(X, M, y, delta, W, H, beta, alpha);
     //Rcout << "W:\n" << W.rows(0,8) << "\n";
     arma::uvec temp = arma::find_nan(W);
     //Rcout << "number of nan:" << temp.n_elem << "\n";
     //Rcout << "test1";
 
-    beta = update_beta_cpp(trans(M % X) * W, s, eta, lambda, beta, it);
+    beta = update_beta_cpp(trans(M % X) * W, s, eta, lambda, beta, it, flag_nan);
+    
+    //Rcout << "beta: " << beta << "\n";
+    
+    if(flag_nan){
+      W=W_prev;
+      it=it-1;
+      warning("NaN detected. Alpha too large");
+      break;
+    }
     //Rcout << "test2";
     //Rcout << "beta:\n" << beta << "\n";
 
 
     update_H_cpp(X, M, y, delta, W, H);
+    //Rcout << "H:\n" << H << "\n";
     //Rcout << "test3";
     standardize(W,H,beta);
     ////Rcout << "test4\n";
@@ -535,6 +574,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     Named("beta") = beta,
     Named("loss") = l,
     Named("iter") = it,
-    Named("lossit") = lossit);
+    Named("lossit") = lossit,
+    Named("convergence") = it<maxit,
+    Named("NaN flag") = flag_nan);
   return L;
 }

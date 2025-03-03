@@ -41,7 +41,8 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
       fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, 
                            alpha=a, lambda=l, eta=e, 
                            tol=tol, maxit=maxit, verbose=verbose,
-                           ninit=ninit, imaxit=imaxit)
+                           ninit=ninit, imaxit=imaxit,
+                           W0=W0, H0=H0, beta0=beta0)
       if(save){
         save(fit_cox,file=params$file[pa])
       }

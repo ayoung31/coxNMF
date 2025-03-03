@@ -1,3 +1,4 @@
+#' @export
 set_param_grid = function(k, alpha, lambda, eta, ninit, type, prefix,
                           ngene, maxit, tol, imaxit,
                           nfold=NULL, nmask=NULL, perc_mask=NULL){

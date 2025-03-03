@@ -119,8 +119,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // cdfit_cox_dh_one_lambda_it
-arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d, double lambda, const arma::vec& a, const arma::vec& m, double alpha, int it);
-RcppExport SEXP _coxNMF_cdfit_cox_dh_one_lambda_it(SEXP XSEXP, SEXP dSEXP, SEXP lambdaSEXP, SEXP aSEXP, SEXP mSEXP, SEXP alphaSEXP, SEXP itSEXP) {
+arma::vec cdfit_cox_dh_one_lambda_it(const arma::mat& X, const arma::vec& d, double lambda, const arma::vec& a, const arma::vec& m, double alpha, int it, bool& flag_nan);
+RcppExport SEXP _coxNMF_cdfit_cox_dh_one_lambda_it(SEXP XSEXP, SEXP dSEXP, SEXP lambdaSEXP, SEXP aSEXP, SEXP mSEXP, SEXP alphaSEXP, SEXP itSEXP, SEXP flag_nanSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -131,13 +131,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type m(mSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< int >::type it(itSEXP);
-    rcpp_result_gen = Rcpp::wrap(cdfit_cox_dh_one_lambda_it(X, d, lambda, a, m, alpha, it));
+    Rcpp::traits::input_parameter< bool& >::type flag_nan(flag_nanSEXP);
+    rcpp_result_gen = Rcpp::wrap(cdfit_cox_dh_one_lambda_it(X, d, lambda, a, m, alpha, it, flag_nan));
     return rcpp_result_gen;
 END_RCPP
 }
 // update_beta_cpp
-arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, double alpha, double lambda, arma::vec beta0, int it);
-RcppExport SEXP _coxNMF_update_beta_cpp(SEXP XSEXP, SEXP ySEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP beta0SEXP, SEXP itSEXP) {
+arma::vec update_beta_cpp(const arma::mat& X, const arma::mat& y, double alpha, double lambda, arma::vec beta0, int it, bool& flag_nan);
+RcppExport SEXP _coxNMF_update_beta_cpp(SEXP XSEXP, SEXP ySEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP beta0SEXP, SEXP itSEXP, SEXP flag_nanSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -147,7 +148,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type beta0(beta0SEXP);
     Rcpp::traits::input_parameter< int >::type it(itSEXP);
-    rcpp_result_gen = Rcpp::wrap(update_beta_cpp(X, y, alpha, lambda, beta0, it));
+    Rcpp::traits::input_parameter< bool& >::type flag_nan(flag_nanSEXP);
+    rcpp_result_gen = Rcpp::wrap(update_beta_cpp(X, y, alpha, lambda, beta0, it, flag_nan));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -195,8 +197,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coxNMF_calc_loss_cpp", (DL_FUNC) &_coxNMF_calc_loss_cpp, 10},
     {"_coxNMF_cdfit_cox_dh", (DL_FUNC) &_coxNMF_cdfit_cox_dh, 11},
     {"_coxNMF_cdfit_cox_dh_one_lambda", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda, 7},
-    {"_coxNMF_cdfit_cox_dh_one_lambda_it", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda_it, 7},
-    {"_coxNMF_update_beta_cpp", (DL_FUNC) &_coxNMF_update_beta_cpp, 6},
+    {"_coxNMF_cdfit_cox_dh_one_lambda_it", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda_it, 8},
+    {"_coxNMF_update_beta_cpp", (DL_FUNC) &_coxNMF_update_beta_cpp, 7},
     {"_coxNMF_standardize", (DL_FUNC) &_coxNMF_standardize, 3},
     {"_coxNMF_optimize_loss_cpp", (DL_FUNC) &_coxNMF_optimize_loss_cpp, 14},
     {NULL, NULL, 0}
