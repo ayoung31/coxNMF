@@ -487,20 +487,27 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   int k = H.n_rows;
   
   double loss = 0.000001;
-  double eps = 1;
+  double nmfloss = 0.000001;
+  double survloss = 0.000001;
+  double eps1 = 1;
+  double eps2 = 1;
   int it = -1;
-  double loss_prev;
+  double loss_prev1;
+  double loss_prev2;
   List l;
   arma::mat s = arma::join_horiz(y,delta);
   arma::mat W_prev;
   bool flag_nan=FALSE;
 
   arma::vec lossit = arma::zeros<arma::vec>(maxit);
+  arma::vec slossit = arma::zeros<arma::vec>(maxit);
+  arma::vec nlossit = arma::zeros<arma::vec>(maxit);
   
-  while(eps > tol && it < maxit){
+  while((eps1 > tol || eps2 > tol) && it < maxit){ //
     it = it + 1;
     
-    loss_prev = loss;
+    loss_prev1 = nmfloss;
+    loss_prev2 = survloss;
     
     W_prev=W;
     
@@ -535,9 +542,9 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     loss = l["loss"];
     //Rcout << "loss: " << loss << "\n";
     
-    double survloss = l["surv_loss"];
+    survloss = l["surv_loss"];
     //Rcout << "surv loss: " << survloss << "\n";
-    double nmfloss = l["nmf_loss"];
+    nmfloss = l["nmf_loss"];
     //Rcout << "nmf loss: " << nmfloss << "\n";
     double penloss = l["penalty"];
     
@@ -554,13 +561,19 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // Rcout << "beta\n" << beta << "\n";
     // Rcout << "lp\n" << lptemp.rows(0,4) << "\n";
 
-    eps = std::abs(loss - loss_prev)/loss_prev;
+    eps1 = std::abs(nmfloss - loss_prev1)/loss_prev1;
+    eps2 = std::abs(survloss - loss_prev2)/std::abs(loss_prev2);
+    
     
     lossit[it] = loss;
+    nlossit[it] = nmfloss;
+    slossit[it] = survloss;
+    
 
     
     if(verbose){
-      Rprintf("iter: %d eps: %.8f loss: %.8f\n",it,eps,loss);
+      Rprintf("iter: %d eps1: %.8f nmfloss: %.8f nmflossprev: %.8f\n",it,eps1,nmfloss,loss_prev1);
+      Rprintf("iter: %d eps2: %.8f survloss: %.8f survlossprev: %.8f\n",it,eps2,survloss, loss_prev2);
     }
     if(it == maxit && !init){
       warning("coxNMF failed to converge");
@@ -575,6 +588,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     Named("loss") = l,
     Named("iter") = it,
     Named("lossit") = lossit,
+    Named("slossit") = slossit,
+    Named("nlossit") = nlossit,
     Named("convergence") = it<maxit,
     Named("NaN flag") = flag_nan);
   return L;
