@@ -496,6 +496,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   bool flag_nan=FALSE;
 
   arma::vec lossit = arma::zeros<arma::vec>(maxit);
+  arma::vec slossit = arma::zeros<arma::vec>(maxit);
+  arma::vec nlossit = arma::zeros<arma::vec>(maxit);
 
   while(eps > tol && it < maxit){
     it = it + 1;
@@ -557,6 +559,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     eps = std::abs(loss - loss_prev)/loss_prev;
     
     lossit[it] = loss;
+    nlossit[it] = nmfloss;
+    slossit[it] = survloss;
 
     
     if(verbose){
@@ -575,6 +579,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     Named("loss") = l,
     Named("iter") = it,
     Named("lossit") = lossit,
+    Named("slossit") = slossit,
+    Named("nlossit") = nlossit,
     Named("convergence") = it<maxit,
     Named("NaN flag") = flag_nan);
   return L;
