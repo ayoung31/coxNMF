@@ -496,12 +496,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   bool flag_nan=FALSE;
 
   arma::vec lossit = arma::zeros<arma::vec>(maxit);
-  
-<<<<<<< HEAD
-  while(it < maxit){ //(eps1 > tol || eps2 > tol) && 
-=======
+
   while(eps > tol && it < maxit){
->>>>>>> parent of 2aeba6e (add convergence on both nmf and survival loss)
     it = it + 1;
     
     loss_prev = loss;
