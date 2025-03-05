@@ -42,7 +42,6 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
                            alpha=a, lambda=l, eta=e, 
                            tol=tol, maxit=maxit, verbose=verbose,
                            ninit=ninit, imaxit=imaxit)
-      
       if(save){
         save(fit_cox,file=params$file[pa])
       }
