@@ -503,7 +503,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   arma::vec slossit = arma::zeros<arma::vec>(maxit);
   arma::vec nlossit = arma::zeros<arma::vec>(maxit);
   
-  while((eps1 > tol || eps2 > tol) && it < maxit){ //
+  while(it < maxit){ //(eps1 > tol || eps2 > tol) && 
     it = it + 1;
     
     loss_prev1 = nmfloss;
