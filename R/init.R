@@ -16,7 +16,7 @@ init = function(X, M, y, delta, k, alpha, lambda, eta,
                             alpha, lambda, eta,
                             tol, imaxit, verbose, TRUE)
     
-    loss = abs(fit$loss$surv_loss)
+    loss = abs(fit$loss$loss)
     if(loss < loss_best){
       loss_best=loss
       fit_best=fit

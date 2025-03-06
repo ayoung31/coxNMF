@@ -63,6 +63,9 @@ run_full_warm_start = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
         load(file)
       }
       
+      if(fit_cox$`NaN flag`){
+        break
+      }
       
       
       #primary metrics to output
@@ -80,8 +83,11 @@ run_full_warm_start = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
       converged=fit_cox$iter < maxit
       
       dat[[i]] = data.frame(k=k,alpha=a,lambda=l,eta=e,c=c,loss=ol,sloss=sl,
-                 nloss=nl,pen=pen,bic=bic,converged=converged,niter=fit_cox$iter)
+                 nloss=nl,pen=pen,bic=bic,converged=converged,niter=fit_cox$iter,
+                 flag_nan = fit_cox$`NaN flag`)
       i=i+1
+      
+      
       
     }#end alpha loop
 

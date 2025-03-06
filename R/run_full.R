@@ -50,13 +50,22 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
       load(params$file[pa])
     }
     
-    
+    if(fit_cox$`NaN flag`){
+      warning("alpha too large")
+      break
+    }
 
     #primary metrics to output
     M=matrix(1,nrow=nrow(X),ncol=ncol(X))
     W = fit_cox$W
     H = fit_cox$H
     beta = fit_cox$beta
+    
+    if(all(is.nan(t(X) %*% W %*% beta))){
+      warning("alpha too large 2")
+      break
+    }
+    
     c = cvwrapr::getCindex(t(X) %*% W %*% beta, Surv(y, delta))
     loss = fit_cox$loss
     ol = loss$loss
