@@ -529,7 +529,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     update_H_cpp(X, M, y, delta, W, H);
     //Rcout << "H:\n" << H << "\n";
     //Rcout << "test3";
-    standardize(W,H,beta);
+    //standardize(W,H,beta);
     ////Rcout << "test4\n";
     
     l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta);
