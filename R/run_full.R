@@ -52,7 +52,6 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     
     if(fit_cox$`NaN flag`){
       warning("alpha too large")
-      break
     }
 
     #primary metrics to output
@@ -63,7 +62,6 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     
     if(all(is.nan(t(X) %*% W %*% beta))){
       warning("alpha too large 2")
-      break
     }
     
     c = cvwrapr::getCindex(t(X) %*% W %*% beta, Surv(y, delta))

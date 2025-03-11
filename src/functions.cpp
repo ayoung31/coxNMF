@@ -483,10 +483,13 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   arma::mat W = W0;
   arma::colvec beta = beta0;
   
-  List l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta, 1, 1);
+  List l;
   
-  double std_nmf = l["nmf_loss"];
-  double std_surv = l["surv_loss"];
+  double std_nmf = 1;
+  double std_surv = 1;
+  
+  Rcout << "std_nmf: " << std_nmf << "\n";
+  Rcout << "std_surv: " << std_surv << "\n";
   
   int N = H.n_cols;
   int P = X.n_rows;
@@ -506,7 +509,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
 
   while(eps > tol && it < maxit){
     it = it + 1;
-    
+    Rcout << "loss: " << loss << "\n";
     loss_prev = loss;
     
     W_prev=W;
@@ -524,7 +527,6 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     if(flag_nan){
       W=W_prev;
       it=it-1;
-      warning("NaN detected. Alpha too large");
       break;
     }
     //Rcout << "test2";
@@ -543,10 +545,15 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     //Rcout << "loss: " << loss << "\n";
     
     double survloss = l["surv_loss"];
-    //Rcout << "surv loss: " << survloss << "\n";
+    Rcout << "surv loss: " << survloss/std_surv << "\n";
     double nmfloss = l["nmf_loss"];
-    //Rcout << "nmf loss: " << nmfloss << "\n";
+    Rcout << "nmf loss: " << nmfloss/std_nmf << "\n";
     double penloss = l["penalty"];
+    
+    if(it==0){
+      std_nmf = nmfloss;
+      std_surv = std::abs(survloss);
+    }
     
     // Rcout << "loss\n" << loss << "\n";
     // Rcout << "surv loss\n" << survloss << "\n";
