@@ -89,10 +89,10 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M,
                    double std_nmf, double std_surv) {
   
   
-  double nmf_loss = arma::accu(arma::square(M % (X - W * H)));// / arma::accu(M);
-  double surv_loss = calc_surv_loss(X, M, y, delta, W, beta);
+  double nmf_loss = arma::accu(arma::square(M % (X - W * H)))/std_nmf;// / arma::accu(M);
+  double surv_loss = calc_surv_loss(X, M, y, delta, W, beta) /std_surv;
   double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + eta * arma::accu(arma::abs(beta)));
-  double loss = (1-alpha)*nmf_loss/std_nmf - alpha * (surv_loss - penalty)/std_surv;
+  double loss = (1-alpha)*nmf_loss - alpha * (surv_loss - penalty);
   
   return List::create(
     Named("loss") = loss,
@@ -545,9 +545,9 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     //Rcout << "loss: " << loss << "\n";
     
     double survloss = l["surv_loss"];
-    Rcout << "surv loss: " << survloss/std_surv << "\n";
+    Rcout << "surv loss: " << survloss << "\n";
     double nmfloss = l["nmf_loss"];
-    Rcout << "nmf loss: " << nmfloss/std_nmf << "\n";
+    Rcout << "nmf loss: " << nmfloss << "\n";
     double penloss = l["penalty"];
     
     if(it==0){
