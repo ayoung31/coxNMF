@@ -5,8 +5,8 @@ update_H_cpp <- function(X, M, y, delta, W, H) {
     invisible(.Call(`_coxNMF_update_H_cpp`, X, M, y, delta, W, H))
 }
 
-update_W_cpp <- function(X, M, y, delta, W, H, beta, alpha) {
-    invisible(.Call(`_coxNMF_update_W_cpp`, X, M, y, delta, W, H, beta, alpha))
+update_W_cpp <- function(X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv) {
+    invisible(.Call(`_coxNMF_update_W_cpp`, X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv))
 }
 
 #' @export
@@ -15,8 +15,8 @@ calc_surv_loss <- function(X, M, y, delta, W, beta) {
 }
 
 #' @export
-calc_loss_cpp <- function(X, M, y, delta, W, H, beta, alpha, lambda, eta) {
-    .Call(`_coxNMF_calc_loss_cpp`, X, M, y, delta, W, H, beta, alpha, lambda, eta)
+calc_loss_cpp <- function(X, M, y, delta, W, H, beta, alpha, lambda, eta, std_nmf, std_surv) {
+    .Call(`_coxNMF_calc_loss_cpp`, X, M, y, delta, W, H, beta, alpha, lambda, eta, std_nmf, std_surv)
 }
 
 cdfit_cox_dh <- function(X, d, lambda, eps, max_iter, gamma, m, alpha, dfmax, user, warn) {
