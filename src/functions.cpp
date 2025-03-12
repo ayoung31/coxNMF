@@ -498,8 +498,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   double std_nmf = 1;
   double std_surv = 1;
   
-  Rcout << "std_nmf: " << std_nmf << "\n";
-  Rcout << "std_surv: " << std_surv << "\n";
+//Rcout << "std_nmf: " << std_nmf << "\n";
+//Rcout << "std_surv: " << std_surv << "\n";
   
   int N = H.n_cols;
   int P = X.n_rows;
@@ -523,7 +523,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
 
   while(eps > tol && it < maxit){
     it = it + 1;
-    Rcout << "loss: " << loss << "\n";
+   //Rcout << "loss: " << loss << "\n";
     loss_prev = loss;
     
     W_prev=W;
@@ -560,9 +560,9 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     //Rcout << "loss: " << loss << "\n";
     
     double survloss = l["surv_loss"];
-    Rcout << "surv loss: " << survloss << "\n";
+   //Rcout << "surv loss: " << survloss << "\n";
     double nmfloss = l["nmf_loss"];
-    Rcout << "nmf loss: " << nmfloss << "\n";
+   //Rcout << "nmf loss: " << nmfloss << "\n";
     double penloss = l["penalty"];
     
     if(it==0){
@@ -584,12 +584,12 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     // Rcout << "lp\n" << lptemp.rows(0,4) << "\n";
 
     eps = std::abs(loss - loss_prev)/loss_prev;
-    
-    lossit[it] = loss;
-    nlossit[it] = nmfloss;
-    slossit[it] = survloss;
+    if(it>0){
+      lossit[it-1] = loss;
+      nlossit[it-1] = nmfloss;
+      slossit[it-1] = survloss;
+    }
 
-    
     if(verbose){
       Rprintf("iter: %d eps: %.8f loss: %.8f\n",it,eps,loss);
     }
