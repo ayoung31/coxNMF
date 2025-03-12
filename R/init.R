@@ -1,5 +1,5 @@
 #' @export
-init = function(X, M, y, delta, k, alpha, lambda, eta,
+init = function(X, M, y, delta, k, alpha, lambda, eta, lambdaW, lambdaH,
                 tol = 1e-6, imaxit = 30, verbose = TRUE, ninit = 20){
 
   p = nrow(X)
@@ -14,6 +14,7 @@ init = function(X, M, y, delta, k, alpha, lambda, eta,
 
     fit = optimize_loss_cpp(X, M, y, delta, W0, H0, beta0, 
                             alpha, lambda, eta,
+                            lambdaW, lambdaH,
                             tol, imaxit, verbose, TRUE)
     
     loss = abs(fit$loss$loss)

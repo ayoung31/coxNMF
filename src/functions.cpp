@@ -8,12 +8,13 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 void update_H_cpp(const arma::mat& X, const arma::mat& M, 
                   const arma::colvec& y, const arma::colvec& delta, 
-                  const arma::mat& W, arma::mat& H) {
+                  const arma::mat& W, arma::mat& H, double alpha,
+                  double std_nmf, double lambdaH) {
   
   
   
   arma::mat Wt = W.t();
-  arma::mat denom = Wt * (M % (W * H));
+  arma::mat denom = Wt * (M % (W * H)) + (std_nmf*lambdaH / (1-alpha)) * H;
   //Rcout << "denom: \n" << denom << "\n";
   arma::mat num = H % (Wt * (M % X));
   //Rcout << "num: \n" << num << "\n";
@@ -29,7 +30,7 @@ void update_H_cpp(const arma::mat& X, const arma::mat& M,
 void update_W_cpp(const arma::mat& X, const arma::mat& M, 
                   const arma::colvec& y, const arma::colvec& delta,
                   arma::mat& W, const arma::mat& H, const arma::colvec& beta, 
-                  double alpha, double std_nmf, double std_surv) {
+                  double alpha, double std_nmf, double std_surv, double lambdaW) {
 
   int N = X.n_cols;
   int P = X.n_rows;
@@ -53,7 +54,7 @@ void update_W_cpp(const arma::mat& X, const arma::mat& M,
   arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
   
   arma::mat inside = arma::clamp(((M % X) * Ht) + (alpha * std_nmf / (2 * (1-alpha) * std_surv)) * trans(l),0,arma::datum::inf);
-  arma::mat denom = (M % (W*H)) * Ht;
+  arma::mat denom = (M % (W*H)) * Ht + (lambdaW * std_nmf / (1-alpha)) * W;
   
   //only update nonzero elements of W
   arma::uvec indices = arma::find(W);
@@ -86,19 +87,27 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M,
                    const arma::vec& y, const arma::vec& delta, 
                    const arma::mat& W, const arma::mat& H, const arma::vec& beta, 
                    double alpha, double lambda, double eta, 
-                   double std_nmf, double std_surv) {
+                   double std_nmf, double std_surv,
+                   double lambdaW, double lambdaH) {
   
   
-  double nmf_loss = arma::accu(arma::square(M % (X - W * H)))/std_nmf;// / arma::accu(M);
+  double nmf_loss = arma::accu(arma::square(M % (X - W * H)))/std_nmf;
   double surv_loss = calc_surv_loss(X, M, y, delta, W, beta) /std_surv;
-  double penalty = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + eta * arma::accu(arma::abs(beta)));
-  double loss = (1-alpha)*nmf_loss - alpha * (surv_loss - penalty);
+  double penalty_beta = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + 
+                                  eta * arma::accu(arma::abs(beta))); 
+  double penalty_W = lambdaW * arma::accu(arma::square(W));
+  double penalty_H = lambdaH * arma::accu(arma::square(H));
+  double penalty = penalty_beta + penalty_W + penalty_H;
+  double loss = (1-alpha)*nmf_loss - alpha * surv_loss + penalty;
   
   return List::create(
     Named("loss") = loss,
     Named("nmf_loss") = nmf_loss,
     Named("surv_loss") = surv_loss,
-    Named("penalty") = penalty
+    Named("penalty") = penalty,
+    Named("penalty_beta") = penalty_beta,
+    Named("penalty_W") = penalty_W,
+    Named("penalty_H") = penalty_H
   );
 }
 
@@ -478,6 +487,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
                        const arma::mat& W0, const arma::mat& H0, 
                        const arma::colvec& beta0,  
                        double alpha, double lambda, double eta, 
+                       double lambdaW, double lambdaH,
                        double tol, int maxit, bool verbose, bool init){
   arma::mat H = H0;
   arma::mat W = W0;
@@ -494,6 +504,10 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   int N = H.n_cols;
   int P = X.n_rows;
   int k = H.n_rows;
+  
+  lambda = lambda/k;
+  lambdaW = lambdaW/k;
+  lambdaH = lambdaH/k;
   
   double loss = 0.000001;
   double eps = 1;
@@ -514,7 +528,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     
     W_prev=W;
     
-    update_W_cpp(X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv);
+    update_W_cpp(X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv, lambdaW);
     //Rcout << "W:\n" << W.rows(0,8) << "\n";
     arma::uvec temp = arma::find_nan(W);
     //Rcout << "number of nan:" << temp.n_elem << "\n";
@@ -533,13 +547,14 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     //Rcout << "beta:\n" << beta << "\n";
 
 
-    update_H_cpp(X, M, y, delta, W, H);
+    update_H_cpp(X, M, y, delta, W, H, alpha, std_nmf, lambdaH);
     //Rcout << "H:\n" << H << "\n";
     //Rcout << "test3";
     //standardize(W,H,beta);
     ////Rcout << "test4\n";
     
-    l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta, std_nmf, std_surv);
+    l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta, 
+                      std_nmf, std_surv, lambdaW, lambdaH);
 
     loss = l["loss"];
     //Rcout << "loss: " << loss << "\n";

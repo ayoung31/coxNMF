@@ -1,5 +1,6 @@
 #' @export
 run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
+                    lambdaW = 0, lambdaH = 0,
                     ninit = 100, imaxit = 30, maxit = 3000, tol = 1e-5, 
                     parallel = TRUE, ncore = NULL, replace = FALSE, 
                     save = TRUE, verbose=TRUE, prefix){
@@ -40,6 +41,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
       print("running...")
       fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, 
                            alpha=a, lambda=l, eta=e, 
+                           lambdaW = lambdaW, lambdaH = lambdaH,
                            tol=tol, maxit=maxit, verbose=verbose,
                            ninit=ninit, imaxit=imaxit)
       if(save){

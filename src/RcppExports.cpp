@@ -13,8 +13,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // update_H_cpp
-void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::colvec& y, const arma::colvec& delta, const arma::mat& W, arma::mat& H);
-RcppExport SEXP _coxNMF_update_H_cpp(SEXP XSEXP, SEXP MSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP WSEXP, SEXP HSEXP) {
+void update_H_cpp(const arma::mat& X, const arma::mat& M, const arma::colvec& y, const arma::colvec& delta, const arma::mat& W, arma::mat& H, double alpha, double std_nmf, double lambdaH);
+RcppExport SEXP _coxNMF_update_H_cpp(SEXP XSEXP, SEXP MSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP WSEXP, SEXP HSEXP, SEXP alphaSEXP, SEXP std_nmfSEXP, SEXP lambdaHSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
@@ -23,13 +23,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::colvec& >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type W(WSEXP);
     Rcpp::traits::input_parameter< arma::mat& >::type H(HSEXP);
-    update_H_cpp(X, M, y, delta, W, H);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type std_nmf(std_nmfSEXP);
+    Rcpp::traits::input_parameter< double >::type lambdaH(lambdaHSEXP);
+    update_H_cpp(X, M, y, delta, W, H, alpha, std_nmf, lambdaH);
     return R_NilValue;
 END_RCPP
 }
 // update_W_cpp
-void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::colvec& y, const arma::colvec& delta, arma::mat& W, const arma::mat& H, const arma::colvec& beta, double alpha, double std_nmf, double std_surv);
-RcppExport SEXP _coxNMF_update_W_cpp(SEXP XSEXP, SEXP MSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP alphaSEXP, SEXP std_nmfSEXP, SEXP std_survSEXP) {
+void update_W_cpp(const arma::mat& X, const arma::mat& M, const arma::colvec& y, const arma::colvec& delta, arma::mat& W, const arma::mat& H, const arma::colvec& beta, double alpha, double std_nmf, double std_surv, double lambdaW);
+RcppExport SEXP _coxNMF_update_W_cpp(SEXP XSEXP, SEXP MSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP alphaSEXP, SEXP std_nmfSEXP, SEXP std_survSEXP, SEXP lambdaWSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
@@ -42,7 +45,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type std_nmf(std_nmfSEXP);
     Rcpp::traits::input_parameter< double >::type std_surv(std_survSEXP);
-    update_W_cpp(X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv);
+    Rcpp::traits::input_parameter< double >::type lambdaW(lambdaWSEXP);
+    update_W_cpp(X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv, lambdaW);
     return R_NilValue;
 END_RCPP
 }
@@ -63,8 +67,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // calc_loss_cpp
-List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::vec& y, const arma::vec& delta, const arma::mat& W, const arma::mat& H, const arma::vec& beta, double alpha, double lambda, double eta, double std_nmf, double std_surv);
-RcppExport SEXP _coxNMF_calc_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP std_nmfSEXP, SEXP std_survSEXP) {
+List calc_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::vec& y, const arma::vec& delta, const arma::mat& W, const arma::mat& H, const arma::vec& beta, double alpha, double lambda, double eta, double std_nmf, double std_surv, double lambdaW, double lambdaH);
+RcppExport SEXP _coxNMF_calc_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP WSEXP, SEXP HSEXP, SEXP betaSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP std_nmfSEXP, SEXP std_survSEXP, SEXP lambdaWSEXP, SEXP lambdaHSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -80,7 +84,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< double >::type std_nmf(std_nmfSEXP);
     Rcpp::traits::input_parameter< double >::type std_surv(std_survSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta, std_nmf, std_surv));
+    Rcpp::traits::input_parameter< double >::type lambdaW(lambdaWSEXP);
+    Rcpp::traits::input_parameter< double >::type lambdaH(lambdaHSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta, std_nmf, std_surv, lambdaW, lambdaH));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -170,8 +176,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // optimize_loss_cpp
-List optimize_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::colvec& y, const arma::colvec& delta, const arma::mat& W0, const arma::mat& H0, const arma::colvec& beta0, double alpha, double lambda, double eta, double tol, int maxit, bool verbose, bool init);
-RcppExport SEXP _coxNMF_optimize_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP W0SEXP, SEXP H0SEXP, SEXP beta0SEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP tolSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP initSEXP) {
+List optimize_loss_cpp(const arma::mat& X, const arma::mat& M, const arma::colvec& y, const arma::colvec& delta, const arma::mat& W0, const arma::mat& H0, const arma::colvec& beta0, double alpha, double lambda, double eta, double lambdaW, double lambdaH, double tol, int maxit, bool verbose, bool init);
+RcppExport SEXP _coxNMF_optimize_loss_cpp(SEXP XSEXP, SEXP MSEXP, SEXP ySEXP, SEXP deltaSEXP, SEXP W0SEXP, SEXP H0SEXP, SEXP beta0SEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP etaSEXP, SEXP lambdaWSEXP, SEXP lambdaHSEXP, SEXP tolSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP initSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -185,26 +191,28 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< double >::type lambdaW(lambdaWSEXP);
+    Rcpp::traits::input_parameter< double >::type lambdaH(lambdaHSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< bool >::type init(initSEXP);
-    rcpp_result_gen = Rcpp::wrap(optimize_loss_cpp(X, M, y, delta, W0, H0, beta0, alpha, lambda, eta, tol, maxit, verbose, init));
+    rcpp_result_gen = Rcpp::wrap(optimize_loss_cpp(X, M, y, delta, W0, H0, beta0, alpha, lambda, eta, lambdaW, lambdaH, tol, maxit, verbose, init));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_coxNMF_update_H_cpp", (DL_FUNC) &_coxNMF_update_H_cpp, 6},
-    {"_coxNMF_update_W_cpp", (DL_FUNC) &_coxNMF_update_W_cpp, 10},
+    {"_coxNMF_update_H_cpp", (DL_FUNC) &_coxNMF_update_H_cpp, 9},
+    {"_coxNMF_update_W_cpp", (DL_FUNC) &_coxNMF_update_W_cpp, 11},
     {"_coxNMF_calc_surv_loss", (DL_FUNC) &_coxNMF_calc_surv_loss, 6},
-    {"_coxNMF_calc_loss_cpp", (DL_FUNC) &_coxNMF_calc_loss_cpp, 12},
+    {"_coxNMF_calc_loss_cpp", (DL_FUNC) &_coxNMF_calc_loss_cpp, 14},
     {"_coxNMF_cdfit_cox_dh", (DL_FUNC) &_coxNMF_cdfit_cox_dh, 11},
     {"_coxNMF_cdfit_cox_dh_one_lambda", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda, 7},
     {"_coxNMF_cdfit_cox_dh_one_lambda_it", (DL_FUNC) &_coxNMF_cdfit_cox_dh_one_lambda_it, 8},
     {"_coxNMF_update_beta_cpp", (DL_FUNC) &_coxNMF_update_beta_cpp, 7},
     {"_coxNMF_standardize", (DL_FUNC) &_coxNMF_standardize, 3},
-    {"_coxNMF_optimize_loss_cpp", (DL_FUNC) &_coxNMF_optimize_loss_cpp, 14},
+    {"_coxNMF_optimize_loss_cpp", (DL_FUNC) &_coxNMF_optimize_loss_cpp, 16},
     {NULL, NULL, 0}
 };
 
