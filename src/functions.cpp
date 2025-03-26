@@ -505,7 +505,7 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   int P = X.n_rows;
   int k = H.n_rows;
   
-  lambda = lambda/k;
+  //lambda = lambda/k;
   lambdaW = lambdaW/k;
   lambdaH = lambdaH/k;
   
@@ -564,6 +564,12 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
     double nmfloss = l["nmf_loss"];
    //Rcout << "nmf loss: " << nmfloss << "\n";
     double penloss = l["penalty"];
+    
+    double penaltyW = l["penalty_W"];
+    double penaltyH = l["penalty_H"];
+    double penaltybeta = l["penalty_beta"];
+    
+    //Rcout << "survloss: " << survloss*alpha << " nmfloss" << nmfloss*(1-alpha) << "\npenalty W: " << penaltyW << " penalty H: " << penaltyH << " penalty beta: " << penaltybeta << "\n";
     
     if(it==0){
       std_nmf = nmfloss;
