@@ -62,11 +62,11 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     H = fit_cox$H
     beta = fit_cox$beta
     
-    if(all(is.nan(t(X) %*% W %*% beta))){
+    if(all(is.nan(t(H) %*% beta))){
       warning("alpha too large 2")
     }
     
-    c = cvwrapr::getCindex(t(X) %*% W %*% beta, Surv(y, delta))
+    c = cvwrapr::getCindex(t(H) %*% beta, Surv(y, delta))
     loss = fit_cox$loss
     ol = loss$loss
     sl = loss$surv_loss

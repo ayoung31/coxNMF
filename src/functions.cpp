@@ -8,72 +8,101 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 void update_H_cpp(const arma::mat& X, const arma::mat& M, 
                   const arma::colvec& y, const arma::colvec& delta, 
-                  const arma::mat& W, arma::mat& H, double alpha,
-                  double std_nmf, double lambdaH) {
+                  const arma::mat& W, arma::mat& H, const arma::colvec& beta, 
+                  double alpha, double std_nmf, double std_surv, double lambdaH){
   
+  int N = X.n_cols;
   
-  
+  //necessary transposed matrices
   arma::mat Wt = W.t();
+  
+  // linear predictor
+  arma::vec lp = exp(trans(H) * beta);
+  
+  // Indicator matrix
+  arma::mat y_matrix = arma::repmat(y, 1, N);
+  arma::mat Y = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
+  arma::mat one1byn = arma::ones(1,N);
+  
+  // derivative of log likelihood
+  arma::mat LP = diagmat(lp);
+  arma::mat l = arma::kron(trans(delta) - trans(delta) * ((trans(Y) * LP) / (trans(Y) * lp * one1byn)), beta);
+  
+  arma::mat inside = arma::clamp(Wt*(M%X) + (alpha * std_nmf / (2 * (1-alpha) * std_surv))*l,
+                                 0,
+                                 arma::datum::inf);
   arma::mat denom = Wt * (M % (W * H)) + (std_nmf*lambdaH / (1-alpha)) * H;
-  //Rcout << "denom: \n" << denom << "\n";
-  arma::mat num = H % (Wt * (M % X));
-  //Rcout << "num: \n" << num << "\n";
   
-  arma::uvec indices = arma::find(num>0 && denom>0);
+  // only update nonzero elements of H
+  arma::uvec indices = arma::find(H);
   
-  H.elem(indices) = num.elem(indices) / denom.elem(indices);
+  H.elem(indices) = (H.elem(indices) / denom.elem(indices)) % inside.elem(indices);
+  
+  
+  // WtX version below
+  
+  // arma::mat Wt = W.t();
+  // arma::mat denom = Wt * (M % (W * H)) + (std_nmf*lambdaH / (1-alpha)) * H;
+  // //Rcout << "denom: \n" << denom << "\n";
+  // arma::mat num = H % (Wt * (M % X));
+  // //Rcout << "num: \n" << num << "\n";
+  // 
+  // arma::uvec indices = arma::find(num>0 && denom>0);
+  // 
+  // H.elem(indices) = num.elem(indices) / denom.elem(indices);
   
   return;
 }
 
 // [[Rcpp::export]]
 void update_W_cpp(const arma::mat& X, const arma::mat& M, 
-                  const arma::colvec& y, const arma::colvec& delta,
-                  arma::mat& W, const arma::mat& H, const arma::colvec& beta, 
-                  double alpha, double std_nmf, double std_surv, double lambdaW) {
-
-  int N = X.n_cols;
-  int P = X.n_rows;
-  int s = arma::accu(M);
+                  arma::mat& W, const arma::mat& H,  
+                  double alpha, double std_nmf, double lambdaW) {
   
-  //necessary transposed matrices
-  arma::mat Ht = H.t();
-  arma::mat Xt = X.t();
-  arma::mat Mt = M.t();
-
-  // linear predictor
-  arma::vec lp = exp((Mt % Xt) * W * beta);
-
-  // Indicator matrix
-  arma::mat y_matrix = arma::repmat(y, 1, N);
-  arma::mat Y = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
-  arma::mat oneNP = arma::ones(N,P);
-
-  // derivative of log likelihood
-  arma::mat LP = diagmat(lp);
-  arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
-  
-  arma::mat inside = arma::clamp(((M % X) * Ht) + (alpha * std_nmf / (2 * (1-alpha) * std_surv)) * trans(l),0,arma::datum::inf);
+  arma::mat Ht = trans(H);
+  arma::mat num = (M % X) * Ht;
   arma::mat denom = (M % (W*H)) * Ht + (lambdaW * std_nmf / (1-alpha)) * W;
-  
-  //only update nonzero elements of W
   arma::uvec indices = arma::find(W);
   
-  W.elem(indices) = (W.elem(indices) / denom.elem(indices)) % inside.elem(indices);
+  W.elem(indices) = W.elem(indices) % num.elem(indices) / denom.elem(indices);
+  
+  
+  // WtX version below
+  
+  // arma::mat Xt = X.t();
+  // arma::mat Mt = M.t();
+
+  // linear predictor
+  // arma::vec lp = exp((Mt % Xt) * W * beta);
+
+  // Indicator matrix
+  // arma::mat y_matrix = arma::repmat(y, 1, N);
+  // arma::mat Y = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
+  // arma::mat oneNP = arma::ones(N,P);
+
+  // derivative of log likelihood
+  // arma::mat LP = diagmat(lp);
+  // arma::mat l = arma::kron(trans(delta) * ((Mt % Xt) - (trans(Y)*LP*(Mt % Xt))/(trans(Y)*LP*oneNP)),beta);
+  
+  // arma::mat inside = arma::clamp(((M % X) * Ht) + (alpha * std_nmf / (2 * (1-alpha) * std_surv)) * trans(l),0,arma::datum::inf);
+  // arma::mat denom = (M % (W*H)) * Ht + (lambdaW * std_nmf / (1-alpha)) * W;
+  // 
+  // //only update nonzero elements of W
+  // arma::uvec indices = arma::find(W);
+  // 
+  // W.elem(indices) = (W.elem(indices) / denom.elem(indices)) % inside.elem(indices);
   
   return;
 }
 
 //' @export
 // [[Rcpp::export]]
-double calc_surv_loss(const arma::mat& X, const arma::mat& M, 
-                      const arma::vec& y, const arma::vec& delta,
-                      const arma::mat& W, const arma::vec& beta){
-  int N = X.n_cols;
+double calc_surv_loss(const arma::vec& y, const arma::vec& delta,
+                      const arma::mat& H, const arma::vec& beta){
+  int N = H.n_cols;
   // int N = H.n_cols;
-  arma::colvec lp;
-
-  lp = trans(M % X) * W * beta;
+  arma::colvec lp = trans(H) * beta;
+  //Rcout << "lp: \n" << lp;
   arma::mat y_matrix = arma::repmat(y, 1, N);
   arma::mat ind = arma::conv_to<arma::mat>::from(y_matrix >= y_matrix.t());
   
@@ -92,12 +121,14 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M,
   
   
   double nmf_loss = arma::accu(arma::square(M % (X - W * H)))/std_nmf;
-  double surv_loss = calc_surv_loss(X, M, y, delta, W, beta) /std_surv;
+  
   double penalty_beta = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + 
                                   eta * arma::accu(arma::abs(beta))); 
+  // Rcout << penalty_beta << "\n";
+  double surv_loss = (calc_surv_loss(y, delta, H, beta) + penalty_beta)/std_surv;
   double penalty_W = lambdaW * arma::accu(arma::square(W));
   double penalty_H = lambdaH * arma::accu(arma::square(H));
-  double penalty = penalty_beta + penalty_W + penalty_H;
+  double penalty = penalty_W + penalty_H;
   double loss = (1-alpha)*nmf_loss - alpha * surv_loss + penalty;
   
   return List::create(
@@ -514,7 +545,9 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   int it = -1;
   double loss_prev;
   arma::mat s = arma::join_horiz(y,delta);
+  arma::mat H_prev;
   arma::mat W_prev;
+  arma::vec beta_prev;
   bool flag_nan=FALSE;
 
   arma::vec lossit = arma::zeros<arma::vec>(maxit);
@@ -526,48 +559,72 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
    //Rcout << "loss: " << loss << "\n";
     loss_prev = loss;
     
+    H_prev=H;
     W_prev=W;
+    beta_prev=beta;
     
-    update_W_cpp(X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv, lambdaW);
+    update_W_cpp(X, M, W, H, alpha, std_nmf, lambdaW);
+    update_H_cpp(X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv, lambdaH);
+    
+    
+    // update_W_cpp(X, M, y, delta, W, H, beta, alpha, std_nmf, std_surv, lambdaW);
     //Rcout << "W:\n" << W.rows(0,8) << "\n";
-    arma::uvec temp = arma::find_nan(W);
+    arma::uvec temp = arma::find_nan(H);
     //Rcout << "number of nan:" << temp.n_elem << "\n";
     //Rcout << "test1";
 
-    beta = update_beta_cpp(trans(M % X) * W, s, eta, lambda, beta, it, flag_nan);
+    beta = update_beta_cpp(trans(H), s, eta, lambda, beta, it, flag_nan);
+    // beta = update_beta_cpp(trans(M % X) * W, s, eta, lambda, beta, it, flag_nan);
     
     //Rcout << "beta: " << beta << "\n";
     
+    l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta, 
+                      std_nmf, std_surv, lambdaW, lambdaH);
+    loss = l["loss"];
+    if(std::isnan(loss)){
+      H=H_prev;
+      W=W_prev;
+      beta=beta_prev;
+      l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta, 
+                        std_nmf, std_surv, lambdaW, lambdaH);
+      flag_nan=TRUE;
+      it=it-1;
+      break;
+    }
     if(flag_nan){
+      H=H_prev;
       W=W_prev;
       it=it-1;
       break;
     }
+    
+    
     //Rcout << "test2";
     //Rcout << "beta:\n" << beta << "\n";
 
 
-    update_H_cpp(X, M, y, delta, W, H, alpha, std_nmf, lambdaH);
+    //update_H_cpp(X, M, y, delta, W, H, alpha, std_nmf, lambdaH);
+    
     //Rcout << "H:\n" << H << "\n";
     //Rcout << "test3";
     //standardize(W,H,beta);
     ////Rcout << "test4\n";
     
-    l = calc_loss_cpp(X, M, y, delta, W, H, beta, alpha, lambda, eta, 
-                      std_nmf, std_surv, lambdaW, lambdaH);
+    
 
     loss = l["loss"];
-    //Rcout << "loss: " << loss << "\n";
+    // Rcout << "loss: " << loss << "\n";
     
     double survloss = l["surv_loss"];
-   //Rcout << "surv loss: " << survloss << "\n";
+   // Rcout << "surv loss: " << survloss << "\n";
     double nmfloss = l["nmf_loss"];
-   //Rcout << "nmf loss: " << nmfloss << "\n";
+   // Rcout << "nmf loss: " << nmfloss << "\n";
     double penloss = l["penalty"];
     
     double penaltyW = l["penalty_W"];
     double penaltyH = l["penalty_H"];
     double penaltybeta = l["penalty_beta"];
+    // Rcout << "penalty beta: " << penaltybeta << "\n";
     
     //Rcout << "survloss: " << survloss*alpha << " nmfloss" << nmfloss*(1-alpha) << "\npenalty W: " << penaltyW << " penalty H: " << penaltyH << " penalty beta: " << penaltybeta << "\n";
     
