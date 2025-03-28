@@ -4,11 +4,11 @@ set_param_grid = function(k, alpha, lambda, eta, ninit, type, prefix,
                           nfold=NULL, nmask=NULL, perc_mask=NULL){
   
   if(type=="full"){
-    if(!dir.exists(paste0("results/",prefix,"/full/raw/"))){
-      dir.create(paste0("results/",prefix,"/full/raw/"),recursive = TRUE)
+    if(!dir.exists(paste0("results/",prefix,"/full/ngene",ngene,"/raw/"))){
+      dir.create(paste0("results/",prefix,"/full/ngene",ngene,"/raw/"),recursive = TRUE)
     }
     params = expand.grid(k=k,alpha=alpha,lambda=lambda,eta=eta,lambdaW=lambdaW,lambdaH=lambdaH)
-    params$file=paste0('results/',prefix,'/full/raw/',prefix,'_k=',params$k,
+    params$file=paste0('results/',prefix,'/full/ngene',ngene,'/raw/',prefix,'_k=',params$k,
                        '_alpha',params$alpha,'_lambda',params$lambda,'_eta',params$eta,
                        '_lambdaW',params$lambdaW, '_lambdaH',params$lambdaH,
                        '_full','_ninit',ninit,
