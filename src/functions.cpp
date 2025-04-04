@@ -506,8 +506,8 @@ List optimize_loss_cpp(const arma::mat& X, const arma::mat& M,
   int k = H.n_rows;
   
   //lambda = lambda/k;
-  lambdaW = lambdaW/k;
-  lambdaH = lambdaH/k;
+  //lambdaW = lambdaW/k;
+  //lambdaH = lambdaH/k;
   
   double loss = 0.000001;
   double eps = 1;
