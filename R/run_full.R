@@ -15,7 +15,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     ncore = detectCores() - 1
   }
   
-  params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, ninit=ninit, 
+  params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, lambdaW, lambdaH, ninit=ninit, 
                           type="full", prefix=prefix,
                           ngene = ngene, maxit=maxit, tol=tol, imaxit=imaxit)
   
@@ -33,6 +33,8 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     l = params$lambda[pa]
     e = params$eta[pa]
     k = params$k[pa]
+    lW = params$lambdaW[pa]
+    lH = params$lambdaH[pa]
     
     
     
@@ -41,7 +43,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
       print("running...")
       fit_cox = run_coxNMF(X=X, y=y, delta=delta, k=k, 
                            alpha=a, lambda=l, eta=e, 
-                           lambdaW = lambdaW, lambdaH = lambdaH,
+                           lambdaW = lW, lambdaH = lH,
                            tol=tol, maxit=maxit, verbose=verbose,
                            ninit=ninit, imaxit=imaxit)
       if(save){
@@ -62,7 +64,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     H = fit_cox$H
     beta = fit_cox$beta
     
-    if(all(is.nan(t(X) %*% W %*% beta))){
+    if(any(is.nan(t(X) %*% W %*% beta))){
       warning("alpha too large 2")
     }
     
@@ -75,7 +77,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     bic = -2*sl + k*log(ncol(X))
     converged=fit_cox$iter < maxit
     
-    data.frame(k=k,alpha=a,lambda=l,eta=e,c=c,loss=ol,sloss=sl,
+    data.frame(k=k,alpha=a,lambda=l,eta=e, lambdaW=lW, lambdaH=lH, c=c,loss=ol,sloss=sl,
                nloss=nl,pen=pen,bic=bic,converged=converged,niter=fit_cox$iter,
                flag_nan=fit_cox$`NaN flag`)
     
