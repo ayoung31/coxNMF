@@ -1,5 +1,6 @@
 #' @export
-set_param_grid = function(k, alpha, lambda, eta, ninit, type, prefix,
+set_param_grid = function(k, alpha, lambda, eta, lambdaW, lambdaH,
+			  ninit, type, prefix,
                           ngene, maxit, tol, imaxit,
                           nfold=NULL, nmask=NULL, perc_mask=NULL){
   
@@ -8,6 +9,7 @@ set_param_grid = function(k, alpha, lambda, eta, ninit, type, prefix,
       dir.create(paste0("results/",prefix,"/full/ngene",ngene,"/raw/"),recursive = TRUE)
     }
     params = expand.grid(k=k,alpha=alpha,lambda=lambda,eta=eta,lambdaW=lambdaW,lambdaH=lambdaH)
+
     params$file=paste0('results/',prefix,'/full/ngene',ngene,'/raw/',prefix,'_k=',params$k,
                        '_alpha',params$alpha,'_lambda',params$lambda,'_eta',params$eta,
                        '_lambdaW',params$lambdaW, '_lambdaH',params$lambdaH,
