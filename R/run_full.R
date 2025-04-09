@@ -3,7 +3,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
                     lambdaW = 0, lambdaH = 0,
                     ninit = 100, imaxit = 30, maxit = 3000, tol = 1e-5, 
                     parallel = TRUE, ncore = NULL, replace = FALSE, 
-                    save = TRUE, verbose=TRUE, prefix){
+                    save = TRUE, verbose=TRUE, prefix,test=FALSE){
   
   X=as.matrix(X)
   
@@ -25,9 +25,15 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     parallel::clusterCall(cl, function(x) .libPaths(x), .libPaths())
   }
   
+  if(test){
+    comb = "list"
+  }else{
+    comb = "rbind"
+  }
+  
   metrics = 
     foreach(pa=1:nrow(params), .inorder = FALSE, .errorhandling = 'remove', 
-            .combine = 'rbind', .packages = c("coxNMF","survival","cvwrapr")) %dopar% {
+            .combine = comb, .packages = c("coxNMF","survival","cvwrapr")) %dopar% {
     
     a = params$alpha[pa]
     l = params$lambda[pa]
@@ -77,9 +83,15 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     bic = -2*sl + k*log(ncol(X))
     converged=fit_cox$iter < maxit
     
-    data.frame(k=k,alpha=a,lambda=l,eta=e, lambdaW=lW, lambdaH=lH, c=c,loss=ol,sloss=sl,
+    mets=data.frame(k=k,alpha=a,lambda=l,eta=e, lambdaW=lW, lambdaH=lH, c=c,loss=ol,sloss=sl,
                nloss=nl,pen=pen,bic=bic,converged=converged,niter=fit_cox$iter,
                flag_nan=fit_cox$`NaN flag`)
+    if(test){
+      list(mets=mets,fit_cox=fit_cox)
+    }else{
+      mets
+    }
+
     
     
   }#end foreach
@@ -87,6 +99,7 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
   if(parallel){
     stopCluster(cl)
   }
+  
   
   return(metrics)
   
