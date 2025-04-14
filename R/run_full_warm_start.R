@@ -39,11 +39,11 @@ run_full_warm_start = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
             .combine = comb, .packages = c("coxNMF","survival","cvwrapr")) %dopar% {
     
     #a = params$alpha[pa]
-    l = params$lambda[pa]
-    e = params$eta[pa]
-    k = params$k[pa]
-    lW = params$lambdaW[pa]
-    lH = params$lambdaH[pa]
+    l = params2$lambda[pa]
+    e = params2$eta[pa]
+    k = params2$k[pa]
+    lW = params2$lambdaW[pa]
+    lH = params2$lambdaH[pa]
     
     dat = list()
     i=1
