@@ -21,8 +21,10 @@ init = function(X, M, y, delta, k, alpha, lambda, eta, lambdaW, lambdaH,
     if(loss < loss_best){
       loss_best=loss
       fit_best=fit
+      selected=i
     }
     print(i)
   }
+  print(selected)
   return(list(W0=fit_best$W,H0=fit_best$H,beta0=fit_best$beta))
 }
