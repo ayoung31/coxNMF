@@ -125,11 +125,11 @@ List calc_loss_cpp(const arma::mat& X, const arma::mat& M,
   double penalty_beta = lambda * ((1 - eta) * arma::accu(arma::square(beta)) / 2 + 
                                   eta * arma::accu(arma::abs(beta))); 
   // Rcout << penalty_beta << "\n";
-  double surv_loss = (calc_surv_loss(y, delta, H, beta) + penalty_beta)/std_surv;
+  double surv_loss = calc_surv_loss(y, delta, H, beta)/std_surv;
   double penalty_W = lambdaW * arma::accu(arma::square(W));
   double penalty_H = lambdaH * arma::accu(arma::square(H));
   double penalty = penalty_W + penalty_H;
-  double loss = (1-alpha)*nmf_loss - alpha * surv_loss + penalty;
+  double loss = (1-alpha)*nmf_loss - alpha * (surv_loss + penalty_beta) + penalty;
   
   return List::create(
     Named("loss") = loss,
