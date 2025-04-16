@@ -15,7 +15,8 @@ run_full = function(X, y, delta, k, alpha, lambda = 0, eta = 0,
     ncore = detectCores() - 1
   }
   
-  params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, lambdaW, lambdaH, ninit=ninit, 
+  params = set_param_grid(k=k, alpha=alpha, lambda=lambda, eta=eta, 
+                          lambdaW, lambdaH, ninit=ninit, 
                           type="full", prefix=prefix,
                           ngene = ngene, maxit=maxit, tol=tol, imaxit=imaxit)
   
